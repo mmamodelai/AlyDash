@@ -100,4 +100,51 @@ async function readActiveTab(spreadsheetId) {
     }
 }
 
-module.exports = { authorize, readActiveTab }; 
+async function readVendorsTab(spreadsheetId) {
+    const localFilePath = path.join(__dirname, 'Dashboard Clone.xlsx');
+    
+    try {
+        // Check if file exists
+        await fs.access(localFilePath);
+        
+        // Read the Excel file
+        const workbook = XLSX.readFile(localFilePath);
+        
+        // Get the Vendors sheet
+        const worksheet = workbook.Sheets['Vendors'];
+        if (!worksheet) {
+            throw new Error('Vendors sheet not found in local file. Available sheets: ' + workbook.SheetNames.join(', '));
+        }
+        
+        // Convert sheet to JSON
+        const rows = XLSX.utils.sheet_to_json(worksheet, {header: 1, defval: null});
+        if (!rows || rows.length === 0) {
+            console.log('No data found in Vendors sheet.');
+            return [];
+        }
+        
+        console.log(`Found ${rows.length} rows in Vendors sheet`);
+        const headers = rows[0];
+        
+        // Convert rows to objects
+        const data = rows.slice(1).map(row => {
+            const obj = {};
+            headers.forEach((header, i) => {
+                obj[header] = row[i] !== undefined ? row[i] : null;
+            });
+            return obj;
+        });
+        
+        console.log(`Processed ${data.length} vendor records`);
+        return data;
+        
+    } catch (err) {
+        console.error('Error reading Vendors tab:', err);
+        if (err.code === 'ENOENT') {
+            throw new Error('Dashboard Clone.xlsx file not found in project root. Please ensure the file exists.');
+        }
+        throw new Error(`Failed to read Vendors tab: ${err.message}`);
+    }
+}
+
+module.exports = { authorize, readActiveTab, readVendorsTab }; 
