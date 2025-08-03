@@ -116,6 +116,9 @@ function switchTab(tabName, tabElement) {
         case 'calllog':
             showPlaceholder('Call Log', 'This will show interaction logs');
             break;
+        case 'vendors':
+            loadVendors();
+            break;
         case 'alyssa-notes':
             loadUserTasks('Alyssa');
             break;
@@ -1313,4 +1316,173 @@ window.addEventListener('load', () => {
     if (localStorage.getItem('darkMode') === 'enabled') {
         document.body.classList.add('dark-mode');
     }
-}); 
+});
+
+/**
+ * Load call log data
+ */
+function loadCallLog() {
+    showPlaceholder('Call Log', 'Call log functionality coming soon...');
+}
+
+/**
+ * Load vendors data and display in UI
+ */
+async function loadVendors() {
+    try {
+        showLoading();
+        
+        // Fetch vendors data from the API
+        const response = await fetch('/api/read-vendors?spreadsheetId=local');
+        if (!response.ok) {
+            throw new Error('Failed to fetch vendors data');
+        }
+        
+        const vendors = await response.json();
+        
+        if (vendors.length === 0) {
+            showPlaceholder('Vendors', 'No vendors found. Add some service partners to get started.');
+            return;
+        }
+        
+        // Group vendors by category
+        const vendorsByCategory = {};
+        vendors.forEach(vendor => {
+            const category = vendor['Category'] || 'Other';
+            if (!vendorsByCategory[category]) {
+                vendorsByCategory[category] = [];
+            }
+            vendorsByCategory[category].push(vendor);
+        });
+        
+        // Generate HTML for vendors display
+        const content = document.getElementById('content');
+        content.innerHTML = `
+            <div class="vendors-container">
+                <div class="vendors-header">
+                    <h2>🏢 Vendors & Service Partners</h2>
+                    <p>Manage your hospice service providers and partners</p>
+                    <div class="vendor-stats">
+                        <span class="stat">📊 ${vendors.length} Total Vendors</span>
+                        <span class="stat">🏷️ ${Object.keys(vendorsByCategory).length} Categories</span>
+                    </div>
+                </div>
+                
+                <div class="vendors-grid">
+                    ${Object.entries(vendorsByCategory).map(([category, categoryVendors]) => `
+                        <div class="vendor-category">
+                            <h3>${getCategoryIcon(category)} ${category}</h3>
+                            <div class="vendor-cards">
+                                ${categoryVendors.map(vendor => generateVendorCard(vendor)).join('')}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+        
+    } catch (error) {
+        console.error('Error loading vendors:', error);
+        showError('Failed to load vendors data: ' + error.message);
+    }
+}
+
+/**
+ * Generate vendor card HTML
+ */
+function generateVendorCard(vendor) {
+    const rating = vendor['Rating'] || 'N/A';
+    const status = vendor['Status'] || 'Active';
+    const lastContact = vendor['Last Contact'] || 'N/A';
+    
+    return `
+        <div class="vendor-card ${status.toLowerCase()}">
+            <div class="vendor-header">
+                <h4>${vendor['Company Name'] || 'Unknown Company'}</h4>
+                <span class="vendor-id">${vendor['Vendor ID'] || ''}</span>
+            </div>
+            
+            <div class="vendor-details">
+                <p class="service-type">${vendor['Service Type'] || 'General Services'}</p>
+                <p class="contact-person">👤 ${vendor['Contact Person'] || 'No contact listed'}</p>
+                <p class="phone">📞 ${vendor['Phone'] || 'No phone listed'}</p>
+                <p class="email">📧 ${vendor['Email'] || 'No email listed'}</p>
+                <p class="address">📍 ${vendor['Address'] || 'No address listed'}</p>
+            </div>
+            
+            <div class="vendor-meta">
+                <div class="rating">
+                    <span class="rating-label">Rating:</span>
+                    <span class="rating-value">${rating}</span>
+                </div>
+                <div class="status">
+                    <span class="status-badge ${status.toLowerCase()}">${status}</span>
+                </div>
+                <div class="last-contact">
+                    <span class="last-contact-label">Last Contact:</span>
+                    <span class="last-contact-value">${lastContact}</span>
+                </div>
+            </div>
+            
+            <div class="vendor-notes">
+                <p>${vendor['Notes'] || 'No notes available'}</p>
+            </div>
+            
+            <div class="vendor-actions">
+                <button class="vendor-action-btn" onclick="contactVendor('${vendor['Vendor ID']}')" title="Contact vendor">
+                    📞 Contact
+                </button>
+                <button class="vendor-action-btn" onclick="viewVendorDetails('${vendor['Vendor ID']}')" title="View details">
+                    👁️ Details
+                </button>
+                <button class="vendor-action-btn" onclick="editVendor('${vendor['Vendor ID']}')" title="Edit vendor">
+                    ✏️ Edit
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Get category icon based on vendor category
+ */
+function getCategoryIcon(category) {
+    const icons = {
+        'Cremation': '🔥',
+        'Pharmacy': '💊',
+        'Doula': '🤱',
+        'Funeral Services': '⚰️',
+        'Medical Equipment': '🩺',
+        'Counseling': '🧠',
+        'Other': '🏢'
+    };
+    return icons[category] || '🏢';
+}
+
+/**
+ * Contact vendor function
+ */
+function contactVendor(vendorId) {
+    // Find vendor data and open contact options
+    console.log('Contacting vendor:', vendorId);
+    // TODO: Implement contact functionality
+    alert('Contact functionality coming soon for vendor: ' + vendorId);
+}
+
+/**
+ * View vendor details function
+ */
+function viewVendorDetails(vendorId) {
+    console.log('Viewing details for vendor:', vendorId);
+    // TODO: Implement detailed view
+    alert('Detailed view coming soon for vendor: ' + vendorId);
+}
+
+/**
+ * Edit vendor function
+ */
+function editVendor(vendorId) {
+    console.log('Editing vendor:', vendorId);
+    // TODO: Implement edit functionality
+    alert('Edit functionality coming soon for vendor: ' + vendorId);
+} 
