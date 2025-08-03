@@ -147,4 +147,95 @@ async function readVendorsTab(spreadsheetId) {
     }
 }
 
-module.exports = { authorize, readActiveTab, readVendorsTab }; 
+async function readChatTab(spreadsheetId) {
+    const localFilePath = path.join(__dirname, 'Dashboard Clone.xlsx');
+    
+    try {
+        // Check if file exists
+        await fs.access(localFilePath);
+        
+        // Read the Excel file
+        const workbook = XLSX.readFile(localFilePath);
+        
+        // Get the Chat sheet
+        const worksheet = workbook.Sheets['Chat'];
+        if (!worksheet) {
+            throw new Error('Chat sheet not found in local file. Available sheets: ' + workbook.SheetNames.join(', '));
+        }
+        
+        // Convert sheet to JSON
+        const rows = XLSX.utils.sheet_to_json(worksheet, {header: 1, defval: null});
+        if (!rows || rows.length === 0) {
+            console.log('No data found in Chat sheet.');
+            return [];
+        }
+        
+        console.log(`Found ${rows.length} rows in Chat sheet`);
+        const headers = rows[0];
+        
+        // Convert rows to objects
+        const data = rows.slice(1).map(row => {
+            const obj = {};
+            headers.forEach((header, i) => {
+                obj[header] = row[i] !== undefined ? row[i] : null;
+            });
+            return obj;
+        });
+        
+        console.log(`Processed ${data.length} chat messages`);
+        return data;
+        
+    } catch (err) {
+        console.error('Error reading Chat tab:', err);
+        if (err.code === 'ENOENT') {
+            throw new Error('Dashboard Clone.xlsx file not found in project root. Please ensure the file exists.');
+        }
+        throw new Error(`Failed to read Chat tab: ${err.message}`);
+    }
+}
+
+async function addChatMessage(messageData) {
+    const localFilePath = path.join(__dirname, 'Dashboard Clone.xlsx');
+    
+    try {
+        // Read existing file
+        const workbook = XLSX.readFile(localFilePath);
+        const worksheet = workbook.Sheets['Chat'];
+        
+        if (!worksheet) {
+            throw new Error('Chat sheet not found');
+        }
+        
+        // Convert to array of arrays
+        const rows = XLSX.utils.sheet_to_json(worksheet, {header: 1, defval: null});
+        
+        // Add new message
+        const timestamp = new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14);
+        const newRow = [
+            timestamp,
+            messageData.user,
+            messageData.message,
+            messageData.type || 'message',
+            messageData.recipients || 'all',
+            'active'
+        ];
+        
+        rows.push(newRow);
+        
+        // Convert back to worksheet
+        const newWorksheet = XLSX.utils.aoa_to_sheet(rows);
+        workbook.Sheets['Chat'] = newWorksheet;
+        
+        // Write back to file
+        XLSX.writeFile(workbook, localFilePath);
+        
+        console.log('Chat message added successfully');
+        return { success: true, timestamp };
+        
+    } catch (error) {
+        console.error('Error adding chat message:', error);
+        throw error;
+    }
+}
+
+module.exports = { authorize, readActiveTab, readVendorsTab, readChatTab, addChatMessage }; 

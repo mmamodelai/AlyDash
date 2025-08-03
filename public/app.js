@@ -119,6 +119,9 @@ function switchTab(tabName, tabElement) {
         case 'vendors':
             loadVendors();
             break;
+        case 'chat':
+            loadChat();
+            break;
         case 'alyssa-notes':
             loadUserTasks('Alyssa');
             break;
@@ -1329,6 +1332,190 @@ window.addEventListener('load', () => {
  */
 function loadCallLog() {
     showPlaceholder('Call Log', 'Call log functionality coming soon...');
+}
+
+/**
+ * Load chat data and display in UI
+ */
+async function loadChat() {
+    try {
+        showLoading();
+        
+        // Fetch chat data from the API
+        const response = await fetch('/api/read-chat?spreadsheetId=local');
+        if (!response.ok) {
+            throw new Error('Failed to fetch chat data');
+        }
+        
+        const messages = await response.json();
+        displayChat(messages);
+        
+    } catch (error) {
+        console.error('Error loading chat:', error);
+        showError('Failed to load chat messages');
+    }
+}
+
+/**
+ * Display chat messages in the UI
+ */
+function displayChat(messages) {
+    const content = document.getElementById('content');
+    
+    const chatHTML = `
+        <div class="chat-container">
+            <div class="chat-header">
+                <h2>💬 Team Chat</h2>
+                <p>Real-time team communication with @mentions and message types</p>
+                <div class="chat-stats">
+                    <span class="stat">${messages.length} messages</span>
+                    <span class="stat">${new Set(messages.map(m => m.User)).size} team members</span>
+                    <span class="stat">Last sync: ${new Date().toLocaleTimeString()}</span>
+                </div>
+            </div>
+            
+            <div class="chat-messages" id="chat-messages">
+                ${messages.map(message => createChatMessageHTML(message)).join('')}
+            </div>
+            
+            <div class="chat-input-container">
+                <div class="chat-input-wrapper">
+                    <select id="chat-user-select" class="chat-user-select">
+                        <option value="Alyssa">Alyssa</option>
+                        <option value="Dr. Moore">Dr. Moore</option>
+                        <option value="Christa">Christa</option>
+                        <option value="Amber">Amber</option>
+                    </select>
+                    <input type="text" id="chat-message-input" placeholder="Type your message... Use @username to mention someone" class="chat-message-input">
+                    <select id="chat-type-select" class="chat-type-select">
+                        <option value="message">💬 Message</option>
+                        <option value="question">❓ Question</option>
+                        <option value="update">📋 Update</option>
+                        <option value="task">📝 Task</option>
+                        <option value="good_news">🎉 Good News</option>
+                        <option value="info">ℹ️ Info</option>
+                    </select>
+                    <button onclick="sendChatMessage()" class="chat-send-btn">Send</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    content.innerHTML = chatHTML;
+    
+    // Scroll to bottom of chat
+    const chatMessages = document.getElementById('chat-messages');
+    if (chatMessages) {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+}
+
+/**
+ * Create HTML for a single chat message
+ */
+function createChatMessageHTML(message) {
+    const timestamp = formatChatTimestamp(message.Timestamp);
+    const messageType = getMessageTypeIcon(message.Type);
+    const isMention = message.Message.includes('@');
+    const mentionClass = isMention ? 'mention' : '';
+    
+    return `
+        <div class="chat-message ${mentionClass}">
+            <div class="chat-message-header">
+                <span class="chat-user">${message.User}</span>
+                <span class="chat-timestamp">${timestamp}</span>
+                <span class="chat-type">${messageType}</span>
+            </div>
+            <div class="chat-message-content">
+                ${formatChatMessage(message.Message)}
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Format chat timestamp
+ */
+function formatChatTimestamp(timestamp) {
+    if (!timestamp) return '';
+    
+    // Convert YYYYMMDDHHMMSS to readable format
+    const year = timestamp.substring(0, 4);
+    const month = timestamp.substring(4, 6);
+    const day = timestamp.substring(6, 8);
+    const hour = timestamp.substring(8, 10);
+    const minute = timestamp.substring(10, 12);
+    const second = timestamp.substring(12, 14);
+    
+    const date = new Date(year, month - 1, day, hour, minute, second);
+    return date.toLocaleString();
+}
+
+/**
+ * Get message type icon
+ */
+function getMessageTypeIcon(type) {
+    const icons = {
+        'message': '💬',
+        'question': '❓',
+        'update': '📋',
+        'task': '📝',
+        'good_news': '🎉',
+        'info': 'ℹ️'
+    };
+    return icons[type] || '💬';
+}
+
+/**
+ * Format chat message with @mentions
+ */
+function formatChatMessage(message) {
+    return message.replace(/@(\w+)/g, '<span class="mention">@$1</span>');
+}
+
+/**
+ * Send a new chat message
+ */
+async function sendChatMessage() {
+    const userSelect = document.getElementById('chat-user-select');
+    const messageInput = document.getElementById('chat-message-input');
+    const typeSelect = document.getElementById('chat-type-select');
+    
+    const user = userSelect.value;
+    const message = messageInput.value.trim();
+    const type = typeSelect.value;
+    
+    if (!message) {
+        alert('Please enter a message');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/add-chat-message', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                user,
+                message,
+                type,
+                recipients: 'all'
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to send message');
+        }
+        
+        // Clear input and reload chat
+        messageInput.value = '';
+        await loadChat();
+        
+    } catch (error) {
+        console.error('Error sending message:', error);
+        alert('Failed to send message. Please try again.');
+    }
 }
 
 /**
