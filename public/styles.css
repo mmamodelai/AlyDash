@@ -1879,6 +1879,66 @@ body.dark-mode {
     background: #fff5f5;
 }
 
+/* Message type specific styles */
+.chat-message.message-type-gm {
+    border-left-color: #667eea;
+    background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+}
+
+.chat-message.message-type-dm {
+    border-left-color: #28a745;
+    background: linear-gradient(135deg, #f0fff4 0%, #e8f5e8 100%);
+}
+
+.chat-message.message-type-note {
+    border-left-color: #ffc107;
+    background: linear-gradient(135deg, #fffbf0 0%, #fff8e1 100%);
+}
+
+.chat-participants {
+    font-size: 0.85em;
+    color: #666;
+    margin-bottom: 8px;
+    font-style: italic;
+}
+
+.chat-tags {
+    margin-top: 8px;
+}
+
+.chat-tags .tag {
+    background: #667eea;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75em;
+    margin-right: 5px;
+}
+
+.chat-type.gm {
+    background: #667eea;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.8em;
+}
+
+.chat-type.dm {
+    background: #28a745;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.8em;
+}
+
+.chat-type.note {
+    background: #ffc107;
+    color: #333;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.8em;
+}
+
 .chat-message-header {
     display: flex;
     justify-content: space-between;

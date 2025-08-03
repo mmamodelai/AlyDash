@@ -41,12 +41,12 @@ app.get('/api/read-vendors', async (req, res) => {
 
 // API endpoint for reading Chat tab
 app.get('/api/read-chat', async (req, res) => {
-    const { spreadsheetId } = req.query;
+    const { spreadsheetId, user } = req.query;
     if (!spreadsheetId) {
         return res.status(400).json({ error: 'spreadsheetId is required' });
     }
     try {
-        const data = await readChatTab(spreadsheetId);
+        const data = await readChatTab(spreadsheetId, user);
         res.json(data);
     } catch (err) {
         console.error(err);

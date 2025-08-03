@@ -147,7 +147,7 @@ async function readVendorsTab(spreadsheetId) {
     }
 }
 
-async function readChatTab(spreadsheetId) {
+async function readChatTab(spreadsheetId, currentUser = null) {
     const localFilePath = path.join(__dirname, 'Dashboard Clone.xlsx');
     
     try {
@@ -174,7 +174,7 @@ async function readChatTab(spreadsheetId) {
         const headers = rows[0];
         
         // Convert rows to objects
-        const data = rows.slice(1).map(row => {
+        let data = rows.slice(1).map(row => {
             const obj = {};
             headers.forEach((header, i) => {
                 obj[header] = row[i] !== undefined ? row[i] : null;
@@ -182,7 +182,15 @@ async function readChatTab(spreadsheetId) {
             return obj;
         });
         
-        console.log(`Processed ${data.length} chat messages`);
+        // Filter messages based on current user if specified
+        if (currentUser) {
+            data = data.filter(message => {
+                const participants = message.Participants || '';
+                return participants.includes(`<${currentUser}>`);
+            });
+        }
+        
+        console.log(`Processed ${data.length} chat messages${currentUser ? ` for ${currentUser}` : ''}`);
         return data;
         
     } catch (err) {

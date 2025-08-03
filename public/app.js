@@ -1337,18 +1337,22 @@ function loadCallLog() {
 /**
  * Load chat data and display in UI
  */
-async function loadChat() {
+async function loadChat(currentUser = null) {
     try {
         showLoading();
         
         // Fetch chat data from the API
-        const response = await fetch('/api/read-chat?spreadsheetId=local');
+        const url = currentUser 
+            ? `/api/read-chat?spreadsheetId=local&user=${encodeURIComponent(currentUser)}`
+            : '/api/read-chat?spreadsheetId=local';
+            
+        const response = await fetch(url);
         if (!response.ok) {
             throw new Error('Failed to fetch chat data');
         }
         
         const messages = await response.json();
-        displayChat(messages);
+        displayChat(messages, currentUser);
         
     } catch (error) {
         console.error('Error loading chat:', error);
@@ -1359,18 +1363,18 @@ async function loadChat() {
 /**
  * Display chat messages in the UI
  */
-function displayChat(messages) {
+function displayChat(messages, currentUser = null) {
     const content = document.getElementById('content');
     
     const chatHTML = `
         <div class="chat-container">
             <div class="chat-header">
-                <h2>💬 Team Chat</h2>
-                <p>Real-time team communication with @mentions and message types</p>
+                <h2>💬 Team Chat${currentUser ? ` - ${currentUser}'s View` : ''}</h2>
+                <p>Real-time team communication with DM/Group messages and @mentions</p>
                 <div class="chat-stats">
                     <span class="stat">${messages.length} messages</span>
-                    <span class="stat">${new Set(messages.map(m => m.User)).size} team members</span>
-                    <span class="stat">Last sync: ${new Date().toLocaleTimeString()}</span>
+                    <span class="stat">${new Set(messages.map(m => m.Sender)).size} team members</span>
+                    <span class="stat">${currentUser ? 'Filtered View' : 'All Messages'}</span>
                 </div>
             </div>
             
@@ -1386,15 +1390,13 @@ function displayChat(messages) {
                         <option value="Christa">Christa</option>
                         <option value="Amber">Amber</option>
                     </select>
-                    <input type="text" id="chat-message-input" placeholder="Type your message... Use @username to mention someone" class="chat-message-input">
                     <select id="chat-type-select" class="chat-type-select">
-                        <option value="message">💬 Message</option>
-                        <option value="question">❓ Question</option>
-                        <option value="update">📋 Update</option>
-                        <option value="task">📝 Task</option>
-                        <option value="good_news">🎉 Good News</option>
-                        <option value="info">ℹ️ Info</option>
+                        <option value="GM">Group Message (GM)</option>
+                        <option value="DM">Direct Message (DM)</option>
+                        <option value="NOTE">Personal Note (NOTE)</option>
                     </select>
+                    <input type="text" id="chat-recipients-input" placeholder="Recipients: @Alyssa @Dr. Moore @Christa @Amber" class="chat-recipients-input">
+                    <input type="text" id="chat-message-input" placeholder="Type your message..." class="chat-message-input">
                     <button onclick="sendChatMessage()" class="chat-send-btn">Send</button>
                 </div>
             </div>
@@ -1415,20 +1417,24 @@ function displayChat(messages) {
  */
 function createChatMessageHTML(message) {
     const timestamp = formatChatTimestamp(message.Timestamp);
-    const messageType = getMessageTypeIcon(message.Type);
+    const messageType = getMessageTypeLabel(message.Type);
+    const participants = parseParticipants(message.Participants);
     const isMention = message.Message.includes('@');
     const mentionClass = isMention ? 'mention' : '';
+    const typeClass = message.Type?.toLowerCase() || 'gm';
     
     return `
-        <div class="chat-message ${mentionClass}">
+        <div class="chat-message ${mentionClass} message-type-${typeClass}">
             <div class="chat-message-header">
-                <span class="chat-user">${message.User}</span>
+                <span class="chat-user">${message.Sender}</span>
                 <span class="chat-timestamp">${timestamp}</span>
-                <span class="chat-type">${messageType}</span>
+                <span class="chat-type ${typeClass}">${messageType}</span>
             </div>
+            <div class="chat-participants">${participants}</div>
             <div class="chat-message-content">
                 ${formatChatMessage(message.Message)}
             </div>
+            ${message.Tags ? `<div class="chat-tags"><span class="tag">${message.Tags}</span></div>` : ''}
         </div>
     `;
 }
@@ -1452,7 +1458,35 @@ function formatChatTimestamp(timestamp) {
 }
 
 /**
- * Get message type icon
+ * Get message type label
+ */
+function getMessageTypeLabel(type) {
+    const labels = {
+        'GM': '👥 Group',
+        'DM': '💬 Direct',
+        'NOTE': '📝 Note'
+    };
+    return labels[type] || '💬 Message';
+}
+
+/**
+ * Parse participants string to readable format
+ */
+function parseParticipants(participants) {
+    if (!participants) return '';
+    
+    // Extract names from <Name> format
+    const names = participants.match(/<([^>]+)>/g) || [];
+    const cleanNames = names.map(name => name.replace(/[<>]/g, ''));
+    
+    if (cleanNames.length === 0) return '';
+    if (cleanNames.length === 1) return `To: ${cleanNames[0]}`;
+    if (cleanNames.length <= 3) return `To: ${cleanNames.join(', ')}`;
+    return `To: ${cleanNames[0]}, ${cleanNames[1]} +${cleanNames.length - 2} others`;
+}
+
+/**
+ * Get message type icon (legacy support)
  */
 function getMessageTypeIcon(type) {
     const icons = {
@@ -1461,7 +1495,10 @@ function getMessageTypeIcon(type) {
         'update': '📋',
         'task': '📝',
         'good_news': '🎉',
-        'info': 'ℹ️'
+        'info': 'ℹ️',
+        'GM': '👥',
+        'DM': '💬',
+        'NOTE': '📝'
     };
     return icons[type] || '💬';
 }
