@@ -1,0 +1,80 @@
+<DOCUMENT filename="Dashboard Clone.xlsx">
+<SHEET id="0" name="Active">
+row1: ti,Date,Patient Name,DOB,Age,Area,1st request,2nd request,CP Doctor,CP Completed,RXNT Info,WR,Hospice,Prescription Submit,,invoice amount,PAID,Check list,Ingestion Date,Ingestion Location,TTS (Minutes),TTD (Minutes),Consent Received,Medical Records,Physician follow up form,EOLOA State,Death Certificate,All Recodrs in DRC,,Riverside EOLOA,Referred From
+row2: ,45523,Adam Jones,14647,84,san diego,45525,45527,Andzel, Gaja,45529,complete,45525,Radiant,45530,,4200,yes,complete,45536,residents,3,64,yes,yes,45545,,,,,,Radiant Hospice
+row3: ,45720,Clare Burd,25681,55,La Jolla,45720,,,,,,,,,,,,,,,,,,,,,,,,
+row4: ,45725,Emily Carter,18250,75,Encinitas,45722,45724,Dr. Lisa Green,45726,complete,45723,yes,Serenity Hospice,45727,,3500,yes,complete,45730,private home,5,45,yes,yes,45735,,,,,,Serenity Hospice
+row5: ,45730,Frank Davis,21900,65,San Diego,45727,45729,Dr. Mark Hale,45731,pending,45728,no,Radiant,45732,,2800,no,in progress,45735,assisted living,10,120,yes,no,45740,,,,,,Radiant Hospice
+row6: ,45735,Grace Evans,14600,85,La Jolla,45732,45734,Dr. Nina Ford,45736,complete,45733,yes,Harmony Care,45737,,4100,yes,complete,45740,residents,2,30,yes,yes,45745,,,,,,Harmony Care
+row7: ,45740,Henry Foster,25500,56,Oceanside,45737,45739,Dr. Owen Gray,45741,complete,45738,no,Coastal Hospice,45742,,3200,yes,complete,45745,private home,4,60,no,yes,45750,,,,,,Coastal Hospice
+row8: ,45745,Isabel Gomez,19100,72,Carlsbad,45742,45744,Dr. Paula Hunt,45746,pending,45743,yes,Sunrise Hospice,45747,,3900,no,in progress,45750,acute care hospital,15,180,yes,yes,45755,,,,,,Sunrise Hospice
+row9: ,45750,Jack Harris,22800,62,Del Mar,45747,45749,Dr. Quentin Ives,45751,complete,45748,no,Eternal Peace,45752,,2900,yes,complete,45755,in-patient hospice,3,90,yes,no,45760,,,,,,Eternal Peace
+row10: ,45755,Karen Ingram,13700,87,Vista,45752,45754,Dr. Rachel James,45756,complete,45753,yes,Tranquil Care,45757,,4500,yes,complete,45760,other,1,20,no,yes,45765,,,,,,Tranquil Care
+row11: ,45760,Liam Jackson,26400,52,Escondido,45757,45759,Dr. Sam Kline,45761,pending,45758,no,Peaceful End,45762,,3100,no,in progress,45765,private home,6,75,yes,yes,45770,,,,,,Peaceful End
+</SHEET>
+<SHEET id="1" name="Past patient Outreach">
+row1: Patient Name,Recipient,Relationship,Contact Email,Contact Number,Something to mention,Last contact date,Date Sent,Response
+row2: Rita Krait,John Krait,Husband,john.krait2@gmail.com,760-345-7865,married 50 years,45383,n/a,n/a
+row3: Samuel Lee,Maria Lee,Wife,maria.lee@example.com,619-123-4567,high school sweethearts,45400,45405,positive
+row4: Tina Morales,Carlos Morales,Son,carlos.morales@example.com,858-987-6543,only child,45410,45415,no response
+row5: Victor Nolan,Anna Nolan,Daughter,anna.nolan@example.com,760-555-1212,caretaker for 10 years,45420,45425,interested
+row6: Wendy Ortiz,David Ortiz,Brother,david.ortiz@example.com,442-333-4444,siblings close bond,45430,45435,declined
+row7: Xavier Patel,Linda Patel,Sister,linda.patel@example.com,951-222-3333,family reunion planned,45440,45445,positive
+row8: Yvonne Quinn,Robert Quinn,Nephew,robert.quinn@example.com,714-444-5555,visits weekly,45450,45455,no response
+row9: Zachary Reed,Sophie Reed,Niece,sophie.reed@example.com,562-666-7777,helped with care,45460,45465,interested
+row10: Alice Simmons,Tom Simmons,Cousin,tom.simmons@example.com,323-888-9999,distant but supportive,45470,45475,declined
+row11: Brian Tate,Ursula Tate,Aunt,ursula.tate@example.com,213-000-1111,family historian,45480,45485,positive
+</SHEET>
+<SHEET id="2" name="Consulting Docs">
+row1: Name,Company,License Number,Address,Phone Number,Active?
+row2: Dr. Gaja Andzel,Independent,A110569,123 Lucky Ave.,576-687-4095,Yes
+row3: Dr. Lisa Green,Green Medical Group,B223456,456 Elm St.,619-234-5678,Yes
+row4: Dr. Mark Hale,Hale Clinics,C334567,789 Oak Ln.,858-345-6789,No
+row5: Dr. Nina Ford,Ford Health Services,D445678,101 Pine Rd.,760-456-7890,Yes
+row6: Dr. Owen Gray,Gray Associates,E556789,202 Maple Ave.,442-567-8901,Yes
+row7: Dr. Paula Hunt,Hunt Medical,F667890,303 Birch Blvd.,951-678-9012,No
+row8: Dr. Quentin Ives,Ives Partners,G778901,404 Cedar Ct.,714-789-0123,Yes
+row9: Dr. Rachel James,James Healthcare,H889012,505 Dogwood Dr.,562-890-1234,Yes
+row10: Dr. Sam Kline,Kline Group,I990123,606 Elmwood Expy.,323-901-2345,No
+row11: Dr. Tara Lowe,Lowe Clinics,J001234,707 Fir Grove.,213-012-3456,Yes
+</SHEET>
+<SHEET id="3" name="Closed">
+row1: Date,Patient Name,DOB / Age,Age,Area,1st request,2nd request,CP Doctor,CP Completed,RXNT Info,WR,Hospice,Prescription Submit,,invoice amount,PAID,Check list,Ingestion Date,Ingestion Location,TTS (Minutes),TTD (Minutes),Consent Received,Medical Records,Physician follow up form,EOLOA State,Death Certificate,All Recodrs in DRC,,Riverside EOLOA,Referred From
+row2: 45718,Ryan Kurn,20793,79,Encintias,45717,45721,Charles Von Gunten,45348,yes,45330,elizabeth hospis,45351,,3544.86,yes,completed,n/a,private home,n/a,,yes,yes,,,,,,,UCSD
+row3: ,,,,,,,,,,,,,,,,,,assisted living residence,3,19,yes,yes,,45117,yes,yes,,,Apriva Hospice
+row4: ,,,,,,,,,,,,,,,,,,acute care hospital / inpatient,3,30,,yes,45117,45122,yes,yes,,,Silverado hospice
+row5: ,,,,,,,,,,,,,,,,,,In-patient hospice resident,10,180,,,45143,45146,yes,yes,,,
+row6: ,,,,,,,,,,,,,,,,,,other,,,,,,,,,,,
+row7: 45715,Mia Lopez,16400,81,San Diego,45712,45714,Dr. Lisa Green,45716,yes,45713,yes,Radiant,45717,,3600,yes,completed,45720,private home,4,50,yes,yes,45725,yes,yes,yes,,Radiant Hospice,Local Clinic
+row8: 45710,Noah Martinez,23700,60,La Jolla,45707,45709,Dr. Mark Hale,45711,yes,45708,no,Serenity Hospice,45712,,2900,yes,completed,45715,assisted living,8,100,no,yes,45720,yes,yes,yes,,Serenity Hospice,Family Doctor
+row9: 45705,Olivia Nelson,12800,89,Encinitas,45702,45704,Dr. Nina Ford,45706,yes,45703,yes,Harmony Care,45707,,4200,yes,completed,45710,acute care hospital,2,25,yes,no,45715,yes,yes,yes,,Harmony Care,Hospital Referral
+row10: 45700,Paul Oliver,27300,50,Oceanside,45697,45699,Dr. Owen Gray,45701,yes,45698,no,Coastal Hospice,45702,,3100,yes,completed,45705,in-patient hospice,12,150,yes,yes,45710,yes,yes,yes,,Coastal Hospice,UCSD
+row11: 45695,Quinn Perez,20000,70,Carlsbad,45692,45694,Dr. Paula Hunt,45696,yes,45693,yes,Sunrise Hospice,45697,,3800,yes,completed,45700,other,5,70,no,yes,45705,yes,yes,yes,,Sunrise Hospice,Apriva Hospice
+</SHEET>
+<SHEET id="4" name="Oustanding">
+row1: Date,Patient Name,DOB / Age,Age,Area,1st request,2nd request,CP Doctor,CP Completed,RXNT Info,WR,Hospice,Prescription Submit,,invoice amount,PAID,Check list,Ingestion Date,Ingestion Location,TTS (Minutes),TTD (Minutes),Consent Received,Medical Records,Physician follow up form,EOLOA State,,,,,Referred From
+row2: 45518,Phil Spektor,13187,88,45231,45261,Dr. karl Steinber,45505,45550,yes,44928,,45271,,4125,yes,,private home,,,,,,,,,,,,
+row3: ,,,,,,Dr. Susan Bodtkiski,45518,45263,yes,,,,,,,,,,,,,yes,45160,,,,,,
+row4: 45725,Rose Quinn,15500,82,San Diego,45722,45724,Dr. Lisa Green,45726,pending,45723,yes,Radiant,45727,,3700,no,in progress,private home,,,,,,,,,,,,Radiant Hospice
+row5: 45730,Steve Rivera,24600,58,La Jolla,45727,45729,Dr. Mark Hale,45731,pending,45728,no,Serenity Hospice,45732,,3000,no,in progress,assisted living,,,,,,,,,,,,Serenity Hospice
+row6: 45735,Tina Santos,17300,73,Encinitas,45732,45734,Dr. Nina Ford,45736,pending,45733,yes,Harmony Care,45737,,4000,no,in progress,acute care hospital,,,,,,,,,,,,Harmony Care
+row7: 45740,Ulysses Torres,28200,48,Oceanside,45737,45739,Dr. Owen Gray,45741,pending,45738,no,Coastal Hospice,45742,,3200,no,in progress,in-patient hospice,,,,,,,,,,,,Coastal Hospice
+row8: 45745,Victoria Underwood,20900,68,Carlsbad,45742,45744,Dr. Paula Hunt,45746,pending,45743,yes,Sunrise Hospice,45747,,3900,no,in progress,other,,,,,,,,,,,,Sunrise Hospice
+row9: 45750,William Vargas,13600,86,Del Mar,45747,45749,Dr. Quentin Ives,45751,pending,45748,no,Eternal Peace,45752,,4300,no,in progress,private home,,,,,,,,,,,,Eternal Peace
+row10: 45755,Xena Valdez,26450,52,Vista,45752,45754,Dr. Rachel James,45756,pending,45753,yes,Tranquil Care,45757,,3400,no,in progress,assisted living,,,,,,,,,,,,Tranquil Care
+row11: 45760,Yosef Vasquez,19150,71,Escondido,45757,45759,Dr. Sam Kline,45761,pending,45758,no,Peaceful End,45762,,4100,no,in progress,acute care hospital,,,,,,,,,,,,Peaceful End
+</SHEET>
+<SHEET id="5" name="Call Log">
+row1: Date,Time,Person contact,Number,In / Out,Patient,Outcome,Referral?,Source?
+row2: 45594,12,laura ashby radiant hospis,84360533033,incominmg,jon doe,pt had questions,no,
+row3: 45725,14:30,Dr. Lisa Green,619-234-5678,outgoing,Emily Carter,scheduled follow-up,yes,Internal
+row4: 45726,09:45,Maria Lee,858-987-6543,incoming,Samuel Lee,questions about records,no,Family
+row5: 45727,11:15,Carlos Morales,760-555-1212,outgoing,Tina Morales,update on outreach,yes,Referral Network
+row6: 45728,15:00,Anna Nolan,442-333-4444,incoming,Victor Nolan,confirmation received,no,
+row7: 45729,10:20,David Ortiz,951-222-3333,outgoing,Wendy Ortiz,discussed options,yes,Hospital
+row8: 45730,13:45,Linda Patel,714-444-5555,incoming,Xavier Patel,inquiry about services,no,Website
+row9: 45731,16:10,Robert Quinn,562-666-7777,outgoing,Yvonne Quinn,follow-up call,yes,Clinic
+row10: 45732,08:50,Sophie Reed,323-888-9999,incoming,Zachary Reed,feedback provided,no,Email
+row11: 45733,12:05,Tom Simmons,213-000-1111,outgoing,Alice Simmons,scheduled meeting,yes,Partner
+</SHEET>
+</DOCUMENT> 

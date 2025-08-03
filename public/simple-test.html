@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Test - Dashboard Data</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .data-table { border-collapse: collapse; width: 100%; }
+        .data-table th, .data-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        .data-table th { background-color: #f2f2f2; }
+        .error { color: red; background: #ffe6e6; padding: 10px; border-radius: 4px; }
+        .success { color: green; background: #e6ffe6; padding: 10px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>Simple Dashboard Data Test</h1>
+    <button onclick="loadData()">Load Data from XLSX</button>
+    <div id="status"></div>
+    <div id="content"></div>
+
+    <script>
+        async function loadData() {
+            const status = document.getElementById('status');
+            const content = document.getElementById('content');
+            
+            try {
+                status.innerHTML = '<div class="success">Loading data...</div>';
+                
+                // Direct fetch to our server
+                const response = await fetch('/api/read-active?spreadsheetId=local');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                status.innerHTML = `<div class="success">Success! Loaded ${data.length} records</div>`;
+                
+                // Display the data
+                if (data.length > 0) {
+                    const headers = Object.keys(data[0]);
+                    
+                    let html = '<table class="data-table"><thead><tr>';
+                    headers.forEach(header => {
+                        html += `<th>${header}</th>`;
+                    });
+                    html += '</tr></thead><tbody>';
+                    
+                    data.forEach(row => {
+                        html += '<tr>';
+                        headers.forEach(header => {
+                            html += `<td>${row[header] || ''}</td>`;
+                        });
+                        html += '</tr>';
+                    });
+                    
+                    html += '</tbody></table>';
+                    content.innerHTML = html;
+                } else {
+                    content.innerHTML = '<p>No data found</p>';
+                }
+                
+            } catch (error) {
+                status.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+                content.innerHTML = '';
+            }
+        }
+    </script>
+</body>
+</html> 

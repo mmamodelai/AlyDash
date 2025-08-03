@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alyssa's Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Authentication Container -->
+    <div id="auth-container" style="display: none;">
+        <div class="auth-card">
+            <h2>📊 Alyssa's Dashboard</h2>
+            <p>Sign in with your Google account to access your Google Sheets data securely.</p>
+            
+            <div id="auth-error"></div>
+            
+            <div id="setup-instructions" style="display: none;">
+                <div class="setup-section">
+                    <h3>📋 Setup Instructions:</h3>
+                    <ol>
+                        <li>Click "Sign in with Google" below</li>
+                        <li>Grant permission to read your Google Sheets</li>
+                        <li>Paste your Google Sheets link in the input field</li>
+                        <li>Start using the dashboard!</li>
+                    </ol>
+                </div>
+                
+                <button id="signin-btn" onclick="GoogleAuth.signIn()" style="display: none;">
+                    Sign in with Google
+                </button>
+                
+                <div class="sheets-url-section">
+                    <h3>📊 Google Sheets URL:</h3>
+                    <input type="url" id="sheets-url" placeholder="Paste your Google Sheets link here..." />
+                    <button id="connect-sheets-btn" onclick="connectToSheets()">Connect to Sheets</button>
+                    <p class="help-text">
+                        Make sure your Google Sheet has the same structure as the Dashboard Clone.xlsx file
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="main-app" style="display: none;">
+        <div id="sidebar">
+            <div class="sidebar-header">
+                <h2>Alyssa's Dashboard</h2>
+                <div id="user-info"></div>
+                <button id="dark-mode-toggle" onclick="toggleDarkMode()">🌙 Dark Mode</button>
+                <button id="signout-btn" onclick="GoogleAuth.signOut()">Sign Out</button>
+            </div>
+            <ul>
+                <li data-tab="dashboard" class="active">📊 Dashboard</li>
+                <li data-tab="timelines">⏱️ Patient Timelines</li>
+                <li data-tab="active-data">👥 Active - Data</li>
+                <li data-tab="active-todo">✅ Active - Todo</li>
+                <li data-tab="closed">✅ Closed Cases</li>
+                <li data-tab="outstanding">⏳ Outstanding</li>
+                <li data-tab="outreach">📞 Past Patient Outreach</li>
+                <li data-tab="docs">👨‍⚕️ Consulting Docs</li>
+                <li data-tab="calllog">📋 Call Log</li>
+                <li data-tab="alyssa-notes" class="user-section">📝 Alyssa's Tasks</li>
+                <li data-tab="moore-notes" class="user-section">👨‍⚕️ Dr. Moore's Tasks</li>
+                <li data-tab="notes">📋 All Notes</li>
+                <li data-tab="calendar">📅 Calendar</li>
+                <li data-tab="todos">📝 Todos</li>
+            </ul>
+        </div>
+        
+        <div id="main">
+            <div id="header">
+                <input type="text" id="search-bar" placeholder="Search patients, doctors, or notes...">
+                <div id="sheets-info"></div>
+            </div>
+            
+            <div id="content">
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+            
+            <!-- Hidden content divs for different tabs -->
+            <div id="calendar" class="tab-content" style="display: none;">
+                <h2>Upcoming Events</h2>
+                <div id="calendar-events"></div>
+            </div>
+            
+            <div id="todos" class="tab-content" style="display: none;">
+                <h2>Todo List</h2>
+                <div id="todo-list"></div>
+                <button onclick="createNewTask()">Add New Task</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Pinned Patient Footer -->
+    <div id="pinned-footer">
+        <div class="pinned-patient">
+            <div class="pinned-patient-info">
+                <div class="pinned-patient-detail">
+                    <div class="pinned-patient-label">Patient</div>
+                    <div class="pinned-patient-value" id="pinned-name">No patient pinned</div>
+                </div>
+                <div class="pinned-patient-detail">
+                    <div class="pinned-patient-label">DOB</div>
+                    <div class="pinned-patient-value" id="pinned-dob">-</div>
+                </div>
+                <div class="pinned-patient-detail">
+                    <div class="pinned-patient-label">Age</div>
+                    <div class="pinned-patient-value" id="pinned-age">-</div>
+                </div>
+                <div class="pinned-patient-detail">
+                    <div class="pinned-patient-label">Phone</div>
+                    <div class="pinned-patient-value" id="pinned-phone">-</div>
+                </div>
+                <div class="pinned-patient-detail">
+                    <div class="pinned-patient-label">Email</div>
+                    <div class="pinned-patient-value" id="pinned-email">-</div>
+                </div>
+                <div class="pinned-patient-detail">
+                    <div class="pinned-patient-label">Address</div>
+                    <div class="pinned-patient-value" id="pinned-address">-</div>
+                </div>
+                <div class="pinned-patient-detail">
+                    <div class="pinned-patient-label">Diagnosis</div>
+                    <div class="pinned-patient-value" id="pinned-diagnosis">-</div>
+                </div>
+                <div class="pinned-patient-detail">
+                    <div class="pinned-patient-label">Hospice</div>
+                    <div class="pinned-patient-value" id="pinned-hospice">-</div>
+                </div>
+                <div class="pinned-patient-detail">
+                    <div class="pinned-patient-label">Social Worker</div>
+                    <div class="pinned-patient-value" id="pinned-social-worker">-</div>
+                </div>
+                <div class="pinned-patient-detail">
+                    <div class="pinned-patient-label">Doula</div>
+                    <div class="pinned-patient-value" id="pinned-doula">-</div>
+                </div>
+                <div class="pinned-patient-detail">
+                    <div class="pinned-patient-label">Caretaker</div>
+                    <div class="pinned-patient-value" id="pinned-caretaker">-</div>
+                </div>
+            </div>
+            <div class="pinned-patient-actions">
+                <button class="pin-action-btn" onclick="createTaskForPinned()">📝 Add Task</button>
+                <button class="pin-action-btn" onclick="createEventForPinned()">�� Add Event</button>
+                <button class="pin-action-btn" onclick="callPatient()">📞 Call</button>
+                <button class="pin-action-btn" onclick="emailPatient()">📧 Email</button>
+                <button class="pin-action-btn unpin" onclick="unpinPatient()">📌 Unpin</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="status">Initializing...</div>
+    
+    <!-- Debug button for testing -->
+    <button id="debug-btn" onclick="testAPI()" style="position: fixed; top: 10px; right: 10px; z-index: 9999; background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">Test API</button>
+    
+    <script src="auth.js"></script>
+    <script src="app.js"></script>
+    <script>
+        // Initialize authentication on page load
+        window.addEventListener('load', () => {
+            // Wait a bit to ensure all scripts are loaded
+            setTimeout(() => {
+                if (typeof GoogleAuth !== 'undefined') {
+                    GoogleAuth.initialize();
+                } else {
+                    console.error('GoogleAuth not loaded');
+                }
+            }, 100);
+        });
+        
+        // Debug function to test API
+        function testAPI() {
+            console.log('Testing API connection...');
+            fetch('/api/read-active?spreadsheetId=local')
+                .then(response => {
+                    console.log('API Response:', response);
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('API Data:', data);
+                    alert(`API Test Success! Received ${data.length} records.`);
+                })
+                .catch(error => {
+                    console.error('API Test Error:', error);
+                    alert(`API Test Failed: ${error.message}`);
+                });
+        }
+        
+        // Connect to Google Sheets
+        function connectToSheets() {
+            const url = document.getElementById('sheets-url').value;
+            if (!url) {
+                alert('Please paste your Google Sheets URL');
+                return;
+            }
+            
+            if (!GoogleAuth.isValidSheetsUrl(url)) {
+                alert('Please enter a valid Google Sheets URL');
+                return;
+            }
+            
+            const spreadsheetId = GoogleAuth.extractSpreadsheetId(url);
+            localStorage.setItem('spreadsheetId', spreadsheetId);
+            localStorage.setItem('sheetsUrl', url);
+            
+            // Show main app
+            document.getElementById('auth-container').style.display = 'none';
+            document.getElementById('main-app').style.display = 'flex';
+            
+            // Update sheets info
+            document.getElementById('sheets-info').innerHTML = `
+                <span style="font-size: 12px; color: #666;">
+                    Connected to: ${url.substring(0, 50)}...
+                </span>
+            `;
+            
+            // Initialize main app
+            window.initMainApp();
+        }
+        
+        // Pinned patient functions
+        function createTaskForPinned() {
+            const pinnedPatient = JSON.parse(localStorage.getItem('pinnedPatient') || '{}');
+            if (!pinnedPatient['Patient Name']) {
+                alert('No patient pinned');
+                return;
+            }
+            
+            const taskTitle = prompt(`Create task for ${pinnedPatient['Patient Name']}:`, `Follow up with ${pinnedPatient['Patient Name']}`);
+            if (taskTitle) {
+                GoogleAuth.createTaskForPatient(pinnedPatient, taskTitle)
+                    .then(() => {
+                        setStatus(`Task created for ${pinnedPatient['Patient Name']}`, 'success');
+                    })
+                    .catch(err => {
+                        console.error('Error creating task:', err);
+                        setStatus('Error creating task', 'error');
+                    });
+            }
+        }
+        
+        function createEventForPinned() {
+            const pinnedPatient = JSON.parse(localStorage.getItem('pinnedPatient') || '{}');
+            if (!pinnedPatient['Patient Name']) {
+                alert('No patient pinned');
+                return;
+            }
+            
+            GoogleAuth.createCalendarEvent(pinnedPatient, 'follow-up')
+                .then(() => {
+                    setStatus(`Event created for ${pinnedPatient['Patient Name']}`, 'success');
+                })
+                .catch(err => {
+                    console.error('Error creating event:', err);
+                    setStatus('Error creating event', 'error');
+                });
+        }
+        
+        function callPatient() {
+            const pinnedPatient = JSON.parse(localStorage.getItem('pinnedPatient') || '{}');
+            if (!pinnedPatient['Patient Name']) {
+                alert('No patient pinned');
+                return;
+            }
+            
+            // In a real app, this could integrate with a phone system
+            // For now, just show a note template
+            const note = `Call ${pinnedPatient['Patient Name']} - ${pinnedPatient['Area']} - Age ${pinnedPatient['Age']}`;
+            navigator.clipboard.writeText(note).then(() => {
+                setStatus('Call note copied to clipboard', 'success');
+            }).catch(() => {
+                alert(`Call note: ${note}`);
+            });
+        }
+        
+        function emailPatient() {
+            const pinnedPatient = JSON.parse(localStorage.getItem('pinnedPatient') || '{}');
+            if (!pinnedPatient['Patient Name']) {
+                alert('No patient pinned');
+                return;
+            }
+            
+            const email = pinnedPatient['Email'] || pinnedPatient['ContactEmail'] || '';
+            if (email) {
+                const subject = `Follow-up: ${pinnedPatient['Patient Name']}`;
+                const body = `Dear ${pinnedPatient['Patient Name']},\n\nI hope this message finds you well.\n\nBest regards,\nAlyssa`;
+                const mailtoLink = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                window.open(mailtoLink, '_blank');
+                setStatus(`Email opened for ${pinnedPatient['Patient Name']}`, 'success');
+            } else {
+                alert('No email address available for this patient');
+            }
+        }
+        
+        function unpinPatient() {
+            localStorage.removeItem('pinnedPatient');
+            document.getElementById('pinned-footer').style.display = 'none';
+            setStatus('Patient unpinned', 'info');
+        }
+    </script>
+</body>
+</html> 

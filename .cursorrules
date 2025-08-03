@@ -1,0 +1,28 @@
+# Project: Lightweight Local Notion Clone (Google Sheets Dashboard GUI)
+
+## Core Guidelines
+- Always prioritize simplicity: Use vanilla JS/HTML/CSS where possible. Only introduce libraries if essential (e.g., googleapis for Sheets API, Chart.js for dashboards). Avoid heavy frameworks like full React unless reactivity is critical—prefer Svelte or Vue if needed.
+- Focus on lightweight code: Aim for minimal dependencies to reduce crashes. No unnecessary features; stick to outlined specs.
+- Error Handling: Wrap all API calls and user interactions in try-catch. Log errors to console with clear messages. Handle offline scenarios gracefully (e.g., cache in localStorage).
+- Modularity: Structure code in small files/modules (e.g., sync.js, ui.js, notes.js). Use ES6+ syntax.
+- Testing: Suggest unit tests for key functions (e.g., sync logic) using Jest if added.
+- Documentation: Add JSDoc comments to functions. Inline comments for complex logic.
+
+## Tech Stack Constraints
+- Frontend: HTML/CSS/JS primary; optional: Svelte/Vue for UI.
+- Backend: Google Sheets API (Node.js/googleapis or browser-based).
+- Local Server: Use Node.js/Express for dev; package with Electron for desktop.
+- No Cloud: All runs locally; sync only via Google APIs.
+
+## Feature-Specific Rules
+- Sync: Bi-directional with Google Sheets. Poll every 30s; use timestamps for conflict resolution (last-write-wins).
+- Search: Implement fuzzy search (e.g., via JS filter) on loaded data.
+- Notes: Store in separate sheet tab; support hyperlink insertion (e.g., <a> tags in notes).
+- Multi-Device: Assume same Gmail login; no custom auth.
+- Dashboard: Simple tables/charts; pull from Sheets tabs.
+
+## AI Interaction Style
+- Be concise in suggestions: Provide code snippets directly.
+- Explain changes: When refactoring, note why (e.g., "Simplified to reduce deps").
+- Ask for clarification: If spec ambiguous, query user.
+- Align with Outline: Reference the project outline document for all decisions.
