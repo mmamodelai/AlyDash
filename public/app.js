@@ -120,7 +120,7 @@ function switchTab(tabName, tabElement) {
             loadVendors();
             break;
         case 'chat':
-            loadChat();
+            loadChat('Alyssa'); // Load chat from Alyssa's perspective
             break;
         case 'alyssa-notes':
             loadUserTasks('Alyssa');
@@ -1369,12 +1369,21 @@ function displayChat(messages, currentUser = null) {
     const chatHTML = `
         <div class="chat-container">
             <div class="chat-header">
-                <h2>💬 Team Chat${currentUser ? ` - ${currentUser}'s View` : ''}</h2>
-                <p>Real-time team communication with DM/Group messages and @mentions</p>
+                <h2>💬 Team Chat - ${currentUser || 'All Messages'} View</h2>
+                <p>Internal mail system with DM/Group messages and @mentions</p>
+                <div class="chat-controls">
+                    <select id="user-perspective-select" onchange="switchUserPerspective(this.value)" class="user-perspective-select">
+                        <option value="Alyssa" ${currentUser === 'Alyssa' ? 'selected' : ''}>👩‍💼 Alyssa's View</option>
+                        <option value="Dr. Moore" ${currentUser === 'Dr. Moore' ? 'selected' : ''}>👨‍⚕️ Dr. Moore's View</option>
+                        <option value="Christa" ${currentUser === 'Christa' ? 'selected' : ''}>👩‍⚕️ Christa's View</option>
+                        <option value="Amber" ${currentUser === 'Amber' ? 'selected' : ''}>👩‍💼 Amber's View</option>
+                        <option value="" ${!currentUser ? 'selected' : ''}>👥 All Messages</option>
+                    </select>
+                </div>
                 <div class="chat-stats">
                     <span class="stat">${messages.length} messages</span>
                     <span class="stat">${new Set(messages.map(m => m.Sender)).size} team members</span>
-                    <span class="stat">${currentUser ? 'Filtered View' : 'All Messages'}</span>
+                    <span class="stat">${currentUser ? `${currentUser}'s Inbox` : 'All Messages'}</span>
                 </div>
             </div>
             
@@ -1508,6 +1517,17 @@ function getMessageTypeIcon(type) {
  */
 function formatChatMessage(message) {
     return message.replace(/@(\w+)/g, '<span class="mention">@$1</span>');
+}
+
+/**
+ * Switch user perspective in chat
+ */
+function switchUserPerspective(user) {
+    if (user) {
+        loadChat(user);
+    } else {
+        loadChat(); // Load all messages
+    }
 }
 
 /**
