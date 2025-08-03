@@ -125,6 +125,12 @@ function switchTab(tabName, tabElement) {
         case 'moore-notes':
             loadUserTasks('Dr. Moore');
             break;
+        case 'christa-notes':
+            loadUserTasks('Christa');
+            break;
+        case 'amber-notes':
+            loadUserTasks('Amber');
+            break;
         case 'notes':
             loadAllNotes();
             break;
