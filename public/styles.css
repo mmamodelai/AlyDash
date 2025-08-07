@@ -327,6 +327,26 @@ body.dark-mode {
     background: #219a52;
 }
 
+/* Contact links */
+.contact-link {
+    color: #007bff;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.contact-link:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+
+.dark-mode .contact-link {
+    color: #4dabf7;
+}
+
+.dark-mode .contact-link:hover {
+    color: #74c0fc;
+}
+
 /* Patient name styling */
 .patient-name {
     font-weight: 600;

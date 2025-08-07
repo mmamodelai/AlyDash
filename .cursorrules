@@ -26,3 +26,33 @@
 - Explain changes: When refactoring, note why (e.g., "Simplified to reduce deps").
 - Ask for clarification: If spec ambiguous, query user.
 - Align with Outline: Reference the project outline document for all decisions.
+
+Terminal Rules (Windows 11 / PowerShell 7)
+Use PowerShell 7 (pwsh.exe) only.
+All commands must be non‑interactive. Always pass flags to avoid prompts:
+npm/npx: --yes, --silent
+git: auto upstream; never invoke wizards
+gh: --repo, --confirm, prompt=disabled
+Disable pagers: pipe output where needed (| Write-Host or | cat) and prefer commands that exit cleanly.
+When a tool might prompt, set env first (per AGCursorTerminals.md) and retry with non‑interactive flags.
+Command Safety
+Long‑running tasks must run detached or backgrounded and log to a file (PowerShell: Start-Process pwsh -ArgumentList '-NoProfile','-Command','<cmd> 2>&1 | Tee-Object .\\run.log').
+If a port conflict occurs, free it non‑interactively (PowerShell): Get-NetTCPConnection -LocalPort 3000 -EA SilentlyContinue | % { Stop-Process -Id $_.OwningProcess -Force }.
+Git/GitHub Defaults
+Assume main as default branch, push.autoSetupRemote=true.
+If remote is missing, set it explicitly; do not run interactive auth. If auth is needed, instruct user to set GH_TOKEN.
+Project Ground Rules
+Source of truth for terminal behavior lives in AG*.md. Agents must look for and follow AG*.md at repo root (e.g., AGCursorTerminals.md) before running any command.
+Keep all data local; do not export PHI. XLSX is the persistence layer.
+Agent Workflow Expectations
+Before executing: read .cursorrules and any AG*.md.
+Prefer idempotent, single‑shot commands over interactive flows.
+If a command “hangs”, immediately rerun with non‑interactive flags or pipe output; do not wait.
+
+## Non‑Interactive Environment Defaults (Agents MUST enforce)
+- Set for the session if missing before running terminal commands:
+  - `$env:GIT_PAGER='cat'; $env:PAGER='cat'`
+  - `$env:GH_PROMPT='disabled'`
+  - `$env:GIT_TERMINAL_PROMPT='0'` and `$env:GCM_INTERACTIVE='Never'`
+- Prefer commands that add flags: npm/npx `--yes --silent`, gh `--confirm`.
+- For long tasks: `Start-Process pwsh -ArgumentList '-NoProfile','-Command','<cmd> 2>&1 | Tee-Object .\\run.log'`.

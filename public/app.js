@@ -155,7 +155,7 @@ function generatePatientTable(data) {
     }
     
     // Use the important columns that we know exist in the data
-    const importantColumns = ['Patient Name', 'Age', 'Area', 'CP Doctor', 'Hospice', 'PAID', 'Check list'];
+    const importantColumns = ['Patient Name', 'Age', 'Area', 'Phone Number', 'Email', 'CP Doctor', 'Hospice', 'PAID', 'Check list'];
     
     let html = '<table class="data-table"><thead><tr>';
     importantColumns.forEach(col => {
@@ -174,6 +174,10 @@ function generatePatientTable(data) {
                 value = '❌ No';
             } else if (col === 'Check list' && value === 'complete') {
                 value = '✅ Complete';
+            } else if (col === 'Phone Number' && value !== '-') {
+                value = `<a href="tel:${value}" class="contact-link">📞 ${value}</a>`;
+            } else if (col === 'Email' && value !== '-') {
+                value = `<a href="mailto:${value}" class="contact-link">✉️ ${value}</a>`;
             }
             html += `<td>${value}</td>`;
         });
@@ -388,14 +392,14 @@ function pinPatient(patientIndex) {
     document.getElementById('pinned-name').textContent = patient['Patient Name'] || 'Unknown';
     document.getElementById('pinned-dob').textContent = patient['DOB'] ? formatDate(patient['DOB']) : '-';
     document.getElementById('pinned-age').textContent = patient['Age'] || '-';
-    document.getElementById('pinned-phone').textContent = patient['Phone'] || patient['ContactNumber'] || '-';
-    document.getElementById('pinned-email').textContent = patient['Email'] || patient['ContactEmail'] || '-';
-    document.getElementById('pinned-address').textContent = patient['Address'] || patient['Area'] || '-';
-    document.getElementById('pinned-diagnosis').textContent = patient['Diagnosis'] || patient['Condition'] || '-';
+    document.getElementById('pinned-phone').textContent = patient['Phone Number'] || '-';
+    document.getElementById('pinned-email').textContent = patient['Email'] || '-';
+    document.getElementById('pinned-address').textContent = patient['Area'] || '-';
+    document.getElementById('pinned-diagnosis').textContent = patient['CP Doctor'] || '-';
     document.getElementById('pinned-hospice').textContent = patient['Hospice'] || '-';
-    document.getElementById('pinned-social-worker').textContent = patient['Social Worker'] || patient['SocialWorker'] || '-';
-    document.getElementById('pinned-doula').textContent = patient['Doula'] || '-';
-    document.getElementById('pinned-caretaker').textContent = patient['Caretaker'] || patient['Care Team'] || '-';
+    document.getElementById('pinned-social-worker').textContent = patient['CP Completed'] || '-';
+    document.getElementById('pinned-doula').textContent = patient['RXNT Info'] || '-';
+    document.getElementById('pinned-caretaker').textContent = patient['Check list'] || '-';
     
     // Show footer
     document.getElementById('pinned-footer').style.display = 'block';
@@ -1735,4 +1739,92 @@ function editVendor(vendorId) {
     console.log('Editing vendor:', vendorId);
     // TODO: Implement edit functionality
     alert('Edit functionality coming soon for vendor: ' + vendorId);
+}
+
+/**
+ * Call pinned patient function
+ */
+function callPatient() {
+    const pinnedPatient = JSON.parse(localStorage.getItem('pinnedPatient') || '{}');
+    if (!pinnedPatient['Patient Name']) {
+        alert('No patient pinned');
+        return;
+    }
+    
+    const phoneNumber = pinnedPatient['Phone Number'];
+    if (!phoneNumber || phoneNumber === '-') {
+        alert('No phone number available for this patient');
+        return;
+    }
+    
+    // Open phone dialer
+    window.open(`tel:${phoneNumber}`, '_blank');
+    setStatus(`Calling ${pinnedPatient['Patient Name']} at ${phoneNumber}`, 'success');
+}
+
+/**
+ * Email pinned patient function
+ */
+function emailPatient() {
+    const pinnedPatient = JSON.parse(localStorage.getItem('pinnedPatient') || '{}');
+    if (!pinnedPatient['Patient Name']) {
+        alert('No patient pinned');
+        return;
+    }
+    
+    const email = pinnedPatient['Email'];
+    if (!email || email === '-') {
+        alert('No email available for this patient');
+        return;
+    }
+    
+    // Open email client
+    const subject = `Follow up - ${pinnedPatient['Patient Name']}`;
+    const body = `Dear ${pinnedPatient['Patient Name']},\n\nI hope this email finds you well. I wanted to follow up regarding your care.\n\nBest regards,\nYour Care Team`;
+    
+    window.open(`mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
+    setStatus(`Emailing ${pinnedPatient['Patient Name']} at ${email}`, 'success');
+}
+
+/**
+ * Unpin patient function
+ */
+function unpinPatient() {
+    localStorage.removeItem('pinnedPatient');
+    document.getElementById('pinned-footer').style.display = 'none';
+    setStatus('Patient unpinned', 'success');
+}
+
+/**
+ * Create task for pinned patient
+ */
+function createTaskForPinned() {
+    const pinnedPatient = JSON.parse(localStorage.getItem('pinnedPatient') || '{}');
+    if (!pinnedPatient['Patient Name']) {
+        alert('No patient pinned');
+        return;
+    }
+    
+    const taskTitle = prompt(`Create task for ${pinnedPatient['Patient Name']}:`, `Follow up with ${pinnedPatient['Patient Name']}`);
+    if (taskTitle) {
+        // TODO: Implement task creation
+        setStatus(`Task created for ${pinnedPatient['Patient Name']}: ${taskTitle}`, 'success');
+    }
+}
+
+/**
+ * Create event for pinned patient
+ */
+function createEventForPinned() {
+    const pinnedPatient = JSON.parse(localStorage.getItem('pinnedPatient') || '{}');
+    if (!pinnedPatient['Patient Name']) {
+        alert('No patient pinned');
+        return;
+    }
+    
+    const eventTitle = prompt(`Create calendar event for ${pinnedPatient['Patient Name']}:`, `Follow up appointment with ${pinnedPatient['Patient Name']}`);
+    if (eventTitle) {
+        // TODO: Implement event creation
+        setStatus(`Event created for ${pinnedPatient['Patient Name']}: ${eventTitle}`, 'success');
+    }
 } 
