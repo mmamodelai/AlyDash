@@ -116,11 +116,23 @@ function switchTab(tabName, tabElement) {
         case 'calllog':
             showPlaceholder('Call Log', 'This will show interaction logs');
             break;
+        case 'vendors':
+            loadVendors();
+            break;
+        case 'chat':
+            loadChat('Alyssa'); // Load chat from Alyssa's perspective
+            break;
         case 'alyssa-notes':
             loadUserTasks('Alyssa');
             break;
         case 'moore-notes':
             loadUserTasks('Dr. Moore');
+            break;
+        case 'christa-notes':
+            loadUserTasks('Christa');
+            break;
+        case 'amber-notes':
+            loadUserTasks('Amber');
             break;
         case 'notes':
             loadAllNotes();
@@ -143,7 +155,7 @@ function generatePatientTable(data) {
     }
     
     // Use the important columns that we know exist in the data
-    const importantColumns = ['Patient Name', 'Age', 'Area', 'CP Doctor', 'Hospice', 'PAID', 'Check list'];
+    const importantColumns = ['Patient Name', 'Age', 'Area', 'Phone Number', 'Email', 'CP Doctor', 'Hospice', 'PAID', 'Check list'];
     
     let html = '<table class="data-table"><thead><tr>';
     importantColumns.forEach(col => {
@@ -162,6 +174,10 @@ function generatePatientTable(data) {
                 value = '❌ No';
             } else if (col === 'Check list' && value === 'complete') {
                 value = '✅ Complete';
+            } else if (col === 'Phone Number' && value !== '-') {
+                value = `<a href="tel:${value}" class="contact-link">📞 ${value}</a>`;
+            } else if (col === 'Email' && value !== '-') {
+                value = `<a href="mailto:${value}" class="contact-link">✉️ ${value}</a>`;
             }
             html += `<td>${value}</td>`;
         });
@@ -376,14 +392,14 @@ function pinPatient(patientIndex) {
     document.getElementById('pinned-name').textContent = patient['Patient Name'] || 'Unknown';
     document.getElementById('pinned-dob').textContent = patient['DOB'] ? formatDate(patient['DOB']) : '-';
     document.getElementById('pinned-age').textContent = patient['Age'] || '-';
-    document.getElementById('pinned-phone').textContent = patient['Phone'] || patient['ContactNumber'] || '-';
-    document.getElementById('pinned-email').textContent = patient['Email'] || patient['ContactEmail'] || '-';
-    document.getElementById('pinned-address').textContent = patient['Address'] || patient['Area'] || '-';
-    document.getElementById('pinned-diagnosis').textContent = patient['Diagnosis'] || patient['Condition'] || '-';
+    document.getElementById('pinned-phone').textContent = patient['Phone Number'] || '-';
+    document.getElementById('pinned-email').textContent = patient['Email'] || '-';
+    document.getElementById('pinned-address').textContent = patient['Area'] || '-';
+    document.getElementById('pinned-diagnosis').textContent = patient['CP Doctor'] || '-';
     document.getElementById('pinned-hospice').textContent = patient['Hospice'] || '-';
-    document.getElementById('pinned-social-worker').textContent = patient['Social Worker'] || patient['SocialWorker'] || '-';
-    document.getElementById('pinned-doula').textContent = patient['Doula'] || '-';
-    document.getElementById('pinned-caretaker').textContent = patient['Caretaker'] || patient['Care Team'] || '-';
+    document.getElementById('pinned-social-worker').textContent = patient['CP Completed'] || '-';
+    document.getElementById('pinned-doula').textContent = patient['RXNT Info'] || '-';
+    document.getElementById('pinned-caretaker').textContent = patient['Check list'] || '-';
     
     // Show footer
     document.getElementById('pinned-footer').style.display = 'block';
@@ -1313,4 +1329,630 @@ window.addEventListener('load', () => {
     if (localStorage.getItem('darkMode') === 'enabled') {
         document.body.classList.add('dark-mode');
     }
-}); 
+});
+
+/**
+ * Load call log data
+ */
+function loadCallLog() {
+    showPlaceholder('Call Log', 'Call log functionality coming soon...');
+}
+
+/**
+ * Load chat data and display in UI
+ */
+async function loadChat(currentUser = null) {
+    try {
+        showLoading();
+        
+        // Fetch chat data from the API
+        const url = currentUser 
+            ? `/api/read-chat?spreadsheetId=local&user=${encodeURIComponent(currentUser)}`
+            : '/api/read-chat?spreadsheetId=local';
+            
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error('Failed to fetch chat data');
+        }
+        
+        const messages = await response.json();
+        displayChat(messages, currentUser);
+        
+    } catch (error) {
+        console.error('Error loading chat:', error);
+        showError('Failed to load chat messages');
+    }
+}
+
+/**
+ * Display chat messages in the UI
+ */
+function displayChat(messages, currentUser = null) {
+    const content = document.getElementById('content');
+    
+    // User roster and colors (lightweight, no extra deps)
+    const CHAT_USERS = [
+        { name: 'Alyssa', key: 'alyssa', color: '#6f86ff' },
+        { name: 'Dr. Moore', key: 'dr-moore', color: '#ff8c6f' },
+        { name: 'Christa', key: 'christa', color: '#28a745' },
+        { name: 'Amber', key: 'amber', color: '#d19a66' },
+        { name: 'Donnie', key: 'donnie', color: '#a970ff' }
+    ];
+    window.__CHAT_USERS__ = CHAT_USERS;
+    
+    // Helper for saved recipients per sender
+    function getSavedRecipients(sender) {
+        try {
+            const raw = localStorage.getItem(`chatRecipients:${sender}`) || '[]';
+            const arr = JSON.parse(raw);
+            return Array.isArray(arr) ? arr : [];
+        } catch { return []; }
+    }
+    function saveRecipients(sender, recipients) {
+        localStorage.setItem(`chatRecipients:${sender}`, JSON.stringify(recipients));
+    }
+    
+    const chatHTML = `
+        <div class="chat-container">
+            <div class="chat-header">
+                <h2>💬 Team Chat - ${currentUser || 'All Messages'} View</h2>
+                <p>Internal mail system with DM/Group messages and @mentions</p>
+                <div class="chat-controls">
+                    <select id="user-perspective-select" onchange="switchUserPerspective(this.value)" class="user-perspective-select">
+                        <option value="Alyssa" ${currentUser === 'Alyssa' ? 'selected' : ''}>👩‍💼 Alyssa's View</option>
+                        <option value="Dr. Moore" ${currentUser === 'Dr. Moore' ? 'selected' : ''}>👨‍⚕️ Dr. Moore's View</option>
+                        <option value="Christa" ${currentUser === 'Christa' ? 'selected' : ''}>👩‍⚕️ Christa's View</option>
+                        <option value="Amber" ${currentUser === 'Amber' ? 'selected' : ''}>👩‍💼 Amber's View</option>
+                        <option value="" ${!currentUser ? 'selected' : ''}>👥 All Messages</option>
+                    </select>
+                </div>
+                <div class="chat-stats">
+                    <span class="stat">${messages.length} messages</span>
+                    <span class="stat">${new Set(messages.map(m => m.Sender)).size} team members</span>
+                    <span class="stat">${currentUser ? `${currentUser}'s Inbox` : 'All Messages'}</span>
+                </div>
+            </div>
+            
+            <div class="chat-messages" id="chat-messages">
+                ${messages.map(message => createChatMessageHTML(message)).join('')}
+            </div>
+            
+            <div class="chat-input-container">
+                <div class="chat-input-wrapper">
+                    <select id="chat-user-select" class="chat-user-select">
+                        ${CHAT_USERS.map(u => `<option value="${u.name}" ${currentUser===u.name?'selected':''}>${u.name}</option>`).join('')}
+                    </select>
+                    <select id="chat-type-select" class="chat-type-select">
+                        <option value="GM">Group Message (GM)</option>
+                        <option value="DM">Direct Message (DM)</option>
+                        <option value="NOTE">Personal Note (NOTE)</option>
+                    </select>
+                    <div class="chat-recipients">
+                        <div id="recipient-chips" class="chips"></div>
+                        <button type="button" class="recipients-btn" onclick="toggleRecipientsPanel()">Recipients ▾</button>
+                        <div id="recipients-panel" class="recipients-panel" style="display:none;">
+                            ${CHAT_USERS.map(u => `
+                                <label class="recipient-row">
+                                    <input type="checkbox" class="recipient-checkbox" value="${u.name}">
+                                    <span class="dot" style="background:${u.color}"></span>
+                                    <span>${u.name}</span>
+                                </label>
+                            `).join('')}
+                            <div class="recipients-actions">
+                                <button type="button" class="btn-apply" onclick="applyRecipients()">Apply</button>
+                            </div>
+                        </div>
+                    </div>
+                    <input type="text" id="chat-message-input" placeholder="Type your message..." class="chat-message-input">
+                    <button onclick="sendChatMessage()" class="chat-send-btn">Send</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    content.innerHTML = chatHTML;
+    
+    // Initialize recipients from saved or defaults
+    const senderSelect = document.getElementById('chat-user-select');
+    const typeSelect = document.getElementById('chat-type-select');
+    let selectedRecipients = getSavedRecipients(senderSelect.value);
+    if (!selectedRecipients.length) {
+        // default: for GM -> everyone except sender, for DM -> first other user
+        const others = CHAT_USERS.map(u=>u.name).filter(n => n !== senderSelect.value);
+        selectedRecipients = typeSelect.value === 'DM' ? [others[0]] : others;
+    }
+    window.__CHAT_SELECTED_RECIPIENTS__ = selectedRecipients;
+    updateRecipientsUI();
+    
+    // React to sender/type changes to adjust defaults
+    senderSelect.addEventListener('change', () => {
+        const saved = getSavedRecipients(senderSelect.value);
+        if (saved.length) {
+            window.__CHAT_SELECTED_RECIPIENTS__ = saved;
+        } else {
+            const others = CHAT_USERS.map(u=>u.name).filter(n => n !== senderSelect.value);
+            window.__CHAT_SELECTED_RECIPIENTS__ = typeSelect.value === 'DM' ? [others[0]] : others;
+        }
+        updateRecipientsUI();
+    });
+    typeSelect.addEventListener('change', () => {
+        const others = CHAT_USERS.map(u=>u.name).filter(n => n !== senderSelect.value);
+        if (typeSelect.value === 'DM' && window.__CHAT_SELECTED_RECIPIENTS__.length !== 1) {
+            window.__CHAT_SELECTED_RECIPIENTS__ = [others[0]];
+        }
+        if (typeSelect.value === 'GM' && window.__CHAT_SELECTED_RECIPIENTS__.length < 1) {
+            window.__CHAT_SELECTED_RECIPIENTS__ = others;
+        }
+        updateRecipientsUI();
+    });
+
+    // Scroll to bottom of chat
+    const chatMessages = document.getElementById('chat-messages');
+    if (chatMessages) {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    // Helpers exposed globally for button handlers
+    window.toggleRecipientsPanel = function toggleRecipientsPanel() {
+        const panel = document.getElementById('recipients-panel');
+        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        // Sync checkboxes with current selection
+        document.querySelectorAll('.recipient-checkbox').forEach(cb => {
+            cb.checked = window.__CHAT_SELECTED_RECIPIENTS__.includes(cb.value);
+        });
+    }
+    window.applyRecipients = function applyRecipients() {
+        const boxes = Array.from(document.querySelectorAll('.recipient-checkbox'));
+        const picked = boxes.filter(b => b.checked).map(b => b.value);
+        const sender = document.getElementById('chat-user-select').value;
+        if (document.getElementById('chat-type-select').value === 'DM' && picked.length !== 1) {
+            alert('Direct Message requires exactly 1 recipient.');
+            return;
+        }
+        if (picked.includes(sender)) {
+            alert('Sender is included automatically; remove from recipients.');
+            return;
+        }
+        window.__CHAT_SELECTED_RECIPIENTS__ = picked;
+        saveRecipients(sender, picked);
+        updateRecipientsUI();
+        document.getElementById('recipients-panel').style.display = 'none';
+    }
+    function updateRecipientsUI() {
+        const chips = document.getElementById('recipient-chips');
+        if (!chips) return;
+        chips.innerHTML = window.__CHAT_SELECTED_RECIPIENTS__.map(n => {
+            const u = CHAT_USERS.find(x=>x.name===n) || {color:'#999'};
+            return `<span class="chip"><span class="dot" style="background:${u.color}"></span>${n}</span>`;
+        }).join('');
+    }
+}
+
+/**
+ * Create HTML for a single chat message
+ */
+function createChatMessageHTML(message) {
+    const timestamp = formatChatTimestamp(message.Timestamp);
+    const messageType = getMessageTypeLabel(message.Type);
+    const participants = parseParticipants(message.Participants);
+    const isMention = message.Message.includes('@');
+    const mentionClass = isMention ? 'mention' : '';
+    const typeClass = message.Type?.toLowerCase() || 'gm';
+    const color = getUserColor(message.Sender);
+    
+    return `
+        <div class="chat-message ${mentionClass} message-type-${typeClass}">
+            <div class="chat-message-header">
+                <span class="chat-user" style="color:${color}">${message.Sender}</span>
+                <span class="chat-timestamp">${timestamp}</span>
+                <span class="chat-type ${typeClass}">${messageType}</span>
+            </div>
+            <div class="chat-participants">${participants}</div>
+            <div class="chat-message-content">
+                ${formatChatMessage(message.Message)}
+            </div>
+            ${message.Tags ? `<div class="chat-tags"><span class="tag">${message.Tags}</span></div>` : ''}
+        </div>
+    `;
+}
+
+/**
+ * Format chat timestamp
+ */
+function formatChatTimestamp(timestamp) {
+    if (!timestamp) return '';
+    
+    // Convert YYYYMMDDHHMMSS to readable format
+    const year = timestamp.substring(0, 4);
+    const month = timestamp.substring(4, 6);
+    const day = timestamp.substring(6, 8);
+    const hour = timestamp.substring(8, 10);
+    const minute = timestamp.substring(10, 12);
+    const second = timestamp.substring(12, 14);
+    
+    const date = new Date(year, month - 1, day, hour, minute, second);
+    return date.toLocaleString();
+}
+
+/**
+ * Get message type label
+ */
+function getMessageTypeLabel(type) {
+    const labels = {
+        'GM': '👥 Group',
+        'DM': '💬 Direct',
+        'NOTE': '📝 Note'
+    };
+    return labels[type] || '💬 Message';
+}
+
+/**
+ * Parse participants string to readable format
+ */
+function parseParticipants(participants) {
+    if (!participants) return '';
+    
+    // Extract names from <Name> format
+    const names = participants.match(/<([^>]+)>/g) || [];
+    const cleanNames = names.map(name => name.replace(/[<>]/g, ''));
+    
+    if (cleanNames.length === 0) return '';
+    if (cleanNames.length === 1) return `To: ${cleanNames[0]}`;
+    if (cleanNames.length <= 3) return `To: ${cleanNames.join(', ')}`;
+    return `To: ${cleanNames[0]}, ${cleanNames[1]} +${cleanNames.length - 2} others`;
+}
+
+/**
+ * Get message type icon (legacy support)
+ */
+function getMessageTypeIcon(type) {
+    const icons = {
+        'message': '💬',
+        'question': '❓',
+        'update': '📋',
+        'task': '📝',
+        'good_news': '🎉',
+        'info': 'ℹ️',
+        'GM': '👥',
+        'DM': '💬',
+        'NOTE': '📝'
+    };
+    return icons[type] || '💬';
+}
+
+/**
+ * Format chat message with @mentions
+ */
+function formatChatMessage(message) {
+    // Color known @mentions
+    const users = (window.__CHAT_USERS__ || []).reduce((m,u)=>{m[u.name.toLowerCase()] = u.color; return m;},{});
+    return message.replace(/@(\w[\w\.\-]*)/g, (m, p1) => {
+        const key = p1.toLowerCase();
+        const color = users[key] || '#e74c3c';
+        return `<span class="mention" style="color:${color}">@${p1}</span>`;
+    });
+}
+
+// Return color for a user name
+function getUserColor(name) {
+    const list = window.__CHAT_USERS__ || [];
+    const u = list.find(x => x.name === name);
+    return u ? u.color : '#667eea';
+}
+
+/**
+ * Switch user perspective in chat
+ */
+function switchUserPerspective(user) {
+    if (user) {
+        loadChat(user);
+    } else {
+        loadChat(); // Load all messages
+    }
+}
+
+/**
+ * Send a new chat message
+ */
+async function sendChatMessage() {
+    const userSelect = document.getElementById('chat-user-select');
+    const messageInput = document.getElementById('chat-message-input');
+    const typeSelect = document.getElementById('chat-type-select');
+    
+    const user = userSelect.value;
+    const message = messageInput.value.trim();
+    const type = typeSelect.value;
+    const recipients = (window.__CHAT_SELECTED_RECIPIENTS__ || []).slice();
+    
+    if (!message) {
+        alert('Please enter a message');
+        return;
+    }
+    if (type === 'DM' && recipients.length !== 1) {
+        alert('Direct Message requires exactly 1 recipient');
+        return;
+    }
+    if (!recipients.length && type !== 'NOTE') {
+        alert('Please choose at least one recipient');
+        return;
+    }
+    const participants = [`<${user}>`].concat(recipients.map(r=>`<${r}>`)).join('');
+    
+    try {
+        const response = await fetch('/api/add-chat-message', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                sender: user,
+                message,
+                type,
+                participants,
+                tags: ''
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to send message');
+        }
+        
+        // Clear input and reload chat
+        messageInput.value = '';
+        await loadChat(user);
+        
+    } catch (error) {
+        console.error('Error sending message:', error);
+        alert('Failed to send message. Please try again.');
+    }
+}
+
+/**
+ * Load vendors data and display in UI
+ */
+async function loadVendors() {
+    try {
+        showLoading();
+        
+        // Fetch vendors data from the API
+        const response = await fetch('/api/read-vendors?spreadsheetId=local');
+        if (!response.ok) {
+            throw new Error('Failed to fetch vendors data');
+        }
+        
+        const vendors = await response.json();
+        
+        if (vendors.length === 0) {
+            showPlaceholder('Vendors', 'No vendors found. Add some service partners to get started.');
+            return;
+        }
+        
+        // Group vendors by category
+        const vendorsByCategory = {};
+        vendors.forEach(vendor => {
+            const category = vendor['Category'] || 'Other';
+            if (!vendorsByCategory[category]) {
+                vendorsByCategory[category] = [];
+            }
+            vendorsByCategory[category].push(vendor);
+        });
+        
+        // Generate HTML for vendors display
+        const content = document.getElementById('content');
+        content.innerHTML = `
+            <div class="vendors-container">
+                <div class="vendors-header">
+                    <h2>🏢 Vendors & Service Partners</h2>
+                    <p>Manage your hospice service providers and partners</p>
+                    <div class="vendor-stats">
+                        <span class="stat">📊 ${vendors.length} Total Vendors</span>
+                        <span class="stat">🏷️ ${Object.keys(vendorsByCategory).length} Categories</span>
+                    </div>
+                </div>
+                
+                <div class="vendors-grid">
+                    ${Object.entries(vendorsByCategory).map(([category, categoryVendors]) => `
+                        <div class="vendor-category">
+                            <h3>${getCategoryIcon(category)} ${category}</h3>
+                            <div class="vendor-cards">
+                                ${categoryVendors.map(vendor => generateVendorCard(vendor)).join('')}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+        
+    } catch (error) {
+        console.error('Error loading vendors:', error);
+        showError('Failed to load vendors data: ' + error.message);
+    }
+}
+
+/**
+ * Generate vendor card HTML
+ */
+function generateVendorCard(vendor) {
+    const rating = vendor['Rating'] || 'N/A';
+    const status = vendor['Status'] || 'Active';
+    const lastContact = vendor['Last Contact'] || 'N/A';
+    
+    return `
+        <div class="vendor-card ${status.toLowerCase()}">
+            <div class="vendor-header">
+                <h4>${vendor['Company Name'] || 'Unknown Company'}</h4>
+                <span class="vendor-id">${vendor['Vendor ID'] || ''}</span>
+            </div>
+            
+            <div class="vendor-details">
+                <p class="service-type">${vendor['Service Type'] || 'General Services'}</p>
+                <p class="contact-person">👤 ${vendor['Contact Person'] || 'No contact listed'}</p>
+                <p class="phone">📞 ${vendor['Phone'] || 'No phone listed'}</p>
+                <p class="email">📧 ${vendor['Email'] || 'No email listed'}</p>
+                <p class="address">📍 ${vendor['Address'] || 'No address listed'}</p>
+            </div>
+            
+            <div class="vendor-meta">
+                <div class="rating">
+                    <span class="rating-label">Rating:</span>
+                    <span class="rating-value">${rating}</span>
+                </div>
+                <div class="status">
+                    <span class="status-badge ${status.toLowerCase()}">${status}</span>
+                </div>
+                <div class="last-contact">
+                    <span class="last-contact-label">Last Contact:</span>
+                    <span class="last-contact-value">${lastContact}</span>
+                </div>
+            </div>
+            
+            <div class="vendor-notes">
+                <p>${vendor['Notes'] || 'No notes available'}</p>
+            </div>
+            
+            <div class="vendor-actions">
+                <button class="vendor-action-btn" onclick="contactVendor('${vendor['Vendor ID']}')" title="Contact vendor">
+                    📞 Contact
+                </button>
+                <button class="vendor-action-btn" onclick="viewVendorDetails('${vendor['Vendor ID']}')" title="View details">
+                    👁️ Details
+                </button>
+                <button class="vendor-action-btn" onclick="editVendor('${vendor['Vendor ID']}')" title="Edit vendor">
+                    ✏️ Edit
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Get category icon based on vendor category
+ */
+function getCategoryIcon(category) {
+    const icons = {
+        'Cremation': '🔥',
+        'Pharmacy': '💊',
+        'Doula': '🤱',
+        'Funeral Services': '⚰️',
+        'Medical Equipment': '🩺',
+        'Counseling': '🧠',
+        'Other': '🏢'
+    };
+    return icons[category] || '🏢';
+}
+
+/**
+ * Contact vendor function
+ */
+function contactVendor(vendorId) {
+    // Find vendor data and open contact options
+    console.log('Contacting vendor:', vendorId);
+    // TODO: Implement contact functionality
+    alert('Contact functionality coming soon for vendor: ' + vendorId);
+}
+
+/**
+ * View vendor details function
+ */
+function viewVendorDetails(vendorId) {
+    console.log('Viewing details for vendor:', vendorId);
+    // TODO: Implement detailed view
+    alert('Detailed view coming soon for vendor: ' + vendorId);
+}
+
+/**
+ * Edit vendor function
+ */
+function editVendor(vendorId) {
+    console.log('Editing vendor:', vendorId);
+    // TODO: Implement edit functionality
+    alert('Edit functionality coming soon for vendor: ' + vendorId);
+}
+
+/**
+ * Call pinned patient function
+ */
+function callPatient() {
+    const pinnedPatient = JSON.parse(localStorage.getItem('pinnedPatient') || '{}');
+    if (!pinnedPatient['Patient Name']) {
+        alert('No patient pinned');
+        return;
+    }
+    
+    const phoneNumber = pinnedPatient['Phone Number'];
+    if (!phoneNumber || phoneNumber === '-') {
+        alert('No phone number available for this patient');
+        return;
+    }
+    
+    // Open phone dialer
+    window.open(`tel:${phoneNumber}`, '_blank');
+    setStatus(`Calling ${pinnedPatient['Patient Name']} at ${phoneNumber}`, 'success');
+}
+
+/**
+ * Email pinned patient function
+ */
+function emailPatient() {
+    const pinnedPatient = JSON.parse(localStorage.getItem('pinnedPatient') || '{}');
+    if (!pinnedPatient['Patient Name']) {
+        alert('No patient pinned');
+        return;
+    }
+    
+    const email = pinnedPatient['Email'];
+    if (!email || email === '-') {
+        alert('No email available for this patient');
+        return;
+    }
+    
+    // Open email client
+    const subject = `Follow up - ${pinnedPatient['Patient Name']}`;
+    const body = `Dear ${pinnedPatient['Patient Name']},\n\nI hope this email finds you well. I wanted to follow up regarding your care.\n\nBest regards,\nYour Care Team`;
+    
+    window.open(`mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
+    setStatus(`Emailing ${pinnedPatient['Patient Name']} at ${email}`, 'success');
+}
+
+/**
+ * Unpin patient function
+ */
+function unpinPatient() {
+    localStorage.removeItem('pinnedPatient');
+    document.getElementById('pinned-footer').style.display = 'none';
+    setStatus('Patient unpinned', 'success');
+}
+
+/**
+ * Create task for pinned patient
+ */
+function createTaskForPinned() {
+    const pinnedPatient = JSON.parse(localStorage.getItem('pinnedPatient') || '{}');
+    if (!pinnedPatient['Patient Name']) {
+        alert('No patient pinned');
+        return;
+    }
+    
+    const taskTitle = prompt(`Create task for ${pinnedPatient['Patient Name']}:`, `Follow up with ${pinnedPatient['Patient Name']}`);
+    if (taskTitle) {
+        // TODO: Implement task creation
+        setStatus(`Task created for ${pinnedPatient['Patient Name']}: ${taskTitle}`, 'success');
+    }
+}
+
+/**
+ * Create event for pinned patient
+ */
+function createEventForPinned() {
+    const pinnedPatient = JSON.parse(localStorage.getItem('pinnedPatient') || '{}');
+    if (!pinnedPatient['Patient Name']) {
+        alert('No patient pinned');
+        return;
+    }
+    
+    const eventTitle = prompt(`Create calendar event for ${pinnedPatient['Patient Name']}:`, `Follow up appointment with ${pinnedPatient['Patient Name']}`);
+    if (eventTitle) {
+        // TODO: Implement event creation
+        setStatus(`Event created for ${pinnedPatient['Patient Name']}: ${eventTitle}`, 'success');
+    }
+} 
