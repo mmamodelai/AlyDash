@@ -57,13 +57,11 @@ app.get('/api/read-chat', async (req, res) => {
 // API endpoint for adding chat message
 app.post('/api/add-chat-message', express.json(), async (req, res) => {
     try {
-        const { user, message, type, recipients } = req.body;
-        
-        if (!user || !message) {
+        const { sender, message, type, participants, tags } = req.body;
+        if (!sender || !message) {
             return res.status(400).json({ error: 'User and message are required' });
         }
-        
-        const result = await addChatMessage({ user, message, type, recipients });
+        const result = await addChatMessage({ sender, message, type, participants, tags });
         res.json(result);
     } catch (err) {
         console.error(err);

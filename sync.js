@@ -217,15 +217,16 @@ async function addChatMessage(messageData) {
         // Convert to array of arrays
         const rows = XLSX.utils.sheet_to_json(worksheet, {header: 1, defval: null});
         
-        // Add new message
+        // Add new message (Chat headers: Timestamp, Type, Participants, Sender, Message, Status, Tags)
         const timestamp = new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14);
         const newRow = [
             timestamp,
-            messageData.user,
+            messageData.type || 'GM',
+            messageData.participants || `<${messageData.sender || messageData.user}>`,
+            messageData.sender || messageData.user || 'Unknown',
             messageData.message,
-            messageData.type || 'message',
-            messageData.recipients || 'all',
-            'active'
+            'active',
+            messageData.tags || ''
         ];
         
         rows.push(newRow);

@@ -1370,6 +1370,28 @@ async function loadChat(currentUser = null) {
 function displayChat(messages, currentUser = null) {
     const content = document.getElementById('content');
     
+    // User roster and colors (lightweight, no extra deps)
+    const CHAT_USERS = [
+        { name: 'Alyssa', key: 'alyssa', color: '#6f86ff' },
+        { name: 'Dr. Moore', key: 'dr-moore', color: '#ff8c6f' },
+        { name: 'Christa', key: 'christa', color: '#28a745' },
+        { name: 'Amber', key: 'amber', color: '#d19a66' },
+        { name: 'Donnie', key: 'donnie', color: '#a970ff' }
+    ];
+    window.__CHAT_USERS__ = CHAT_USERS;
+    
+    // Helper for saved recipients per sender
+    function getSavedRecipients(sender) {
+        try {
+            const raw = localStorage.getItem(`chatRecipients:${sender}`) || '[]';
+            const arr = JSON.parse(raw);
+            return Array.isArray(arr) ? arr : [];
+        } catch { return []; }
+    }
+    function saveRecipients(sender, recipients) {
+        localStorage.setItem(`chatRecipients:${sender}`, JSON.stringify(recipients));
+    }
+    
     const chatHTML = `
         <div class="chat-container">
             <div class="chat-header">
@@ -1398,17 +1420,29 @@ function displayChat(messages, currentUser = null) {
             <div class="chat-input-container">
                 <div class="chat-input-wrapper">
                     <select id="chat-user-select" class="chat-user-select">
-                        <option value="Alyssa">Alyssa</option>
-                        <option value="Dr. Moore">Dr. Moore</option>
-                        <option value="Christa">Christa</option>
-                        <option value="Amber">Amber</option>
+                        ${CHAT_USERS.map(u => `<option value="${u.name}" ${currentUser===u.name?'selected':''}>${u.name}</option>`).join('')}
                     </select>
                     <select id="chat-type-select" class="chat-type-select">
                         <option value="GM">Group Message (GM)</option>
                         <option value="DM">Direct Message (DM)</option>
                         <option value="NOTE">Personal Note (NOTE)</option>
                     </select>
-                    <input type="text" id="chat-recipients-input" placeholder="Recipients: @Alyssa @Dr. Moore @Christa @Amber" class="chat-recipients-input">
+                    <div class="chat-recipients">
+                        <div id="recipient-chips" class="chips"></div>
+                        <button type="button" class="recipients-btn" onclick="toggleRecipientsPanel()">Recipients ▾</button>
+                        <div id="recipients-panel" class="recipients-panel" style="display:none;">
+                            ${CHAT_USERS.map(u => `
+                                <label class="recipient-row">
+                                    <input type="checkbox" class="recipient-checkbox" value="${u.name}">
+                                    <span class="dot" style="background:${u.color}"></span>
+                                    <span>${u.name}</span>
+                                </label>
+                            `).join('')}
+                            <div class="recipients-actions">
+                                <button type="button" class="btn-apply" onclick="applyRecipients()">Apply</button>
+                            </div>
+                        </div>
+                    </div>
                     <input type="text" id="chat-message-input" placeholder="Type your message..." class="chat-message-input">
                     <button onclick="sendChatMessage()" class="chat-send-btn">Send</button>
                 </div>
@@ -1418,10 +1452,79 @@ function displayChat(messages, currentUser = null) {
     
     content.innerHTML = chatHTML;
     
+    // Initialize recipients from saved or defaults
+    const senderSelect = document.getElementById('chat-user-select');
+    const typeSelect = document.getElementById('chat-type-select');
+    let selectedRecipients = getSavedRecipients(senderSelect.value);
+    if (!selectedRecipients.length) {
+        // default: for GM -> everyone except sender, for DM -> first other user
+        const others = CHAT_USERS.map(u=>u.name).filter(n => n !== senderSelect.value);
+        selectedRecipients = typeSelect.value === 'DM' ? [others[0]] : others;
+    }
+    window.__CHAT_SELECTED_RECIPIENTS__ = selectedRecipients;
+    updateRecipientsUI();
+    
+    // React to sender/type changes to adjust defaults
+    senderSelect.addEventListener('change', () => {
+        const saved = getSavedRecipients(senderSelect.value);
+        if (saved.length) {
+            window.__CHAT_SELECTED_RECIPIENTS__ = saved;
+        } else {
+            const others = CHAT_USERS.map(u=>u.name).filter(n => n !== senderSelect.value);
+            window.__CHAT_SELECTED_RECIPIENTS__ = typeSelect.value === 'DM' ? [others[0]] : others;
+        }
+        updateRecipientsUI();
+    });
+    typeSelect.addEventListener('change', () => {
+        const others = CHAT_USERS.map(u=>u.name).filter(n => n !== senderSelect.value);
+        if (typeSelect.value === 'DM' && window.__CHAT_SELECTED_RECIPIENTS__.length !== 1) {
+            window.__CHAT_SELECTED_RECIPIENTS__ = [others[0]];
+        }
+        if (typeSelect.value === 'GM' && window.__CHAT_SELECTED_RECIPIENTS__.length < 1) {
+            window.__CHAT_SELECTED_RECIPIENTS__ = others;
+        }
+        updateRecipientsUI();
+    });
+
     // Scroll to bottom of chat
     const chatMessages = document.getElementById('chat-messages');
     if (chatMessages) {
         chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    // Helpers exposed globally for button handlers
+    window.toggleRecipientsPanel = function toggleRecipientsPanel() {
+        const panel = document.getElementById('recipients-panel');
+        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        // Sync checkboxes with current selection
+        document.querySelectorAll('.recipient-checkbox').forEach(cb => {
+            cb.checked = window.__CHAT_SELECTED_RECIPIENTS__.includes(cb.value);
+        });
+    }
+    window.applyRecipients = function applyRecipients() {
+        const boxes = Array.from(document.querySelectorAll('.recipient-checkbox'));
+        const picked = boxes.filter(b => b.checked).map(b => b.value);
+        const sender = document.getElementById('chat-user-select').value;
+        if (document.getElementById('chat-type-select').value === 'DM' && picked.length !== 1) {
+            alert('Direct Message requires exactly 1 recipient.');
+            return;
+        }
+        if (picked.includes(sender)) {
+            alert('Sender is included automatically; remove from recipients.');
+            return;
+        }
+        window.__CHAT_SELECTED_RECIPIENTS__ = picked;
+        saveRecipients(sender, picked);
+        updateRecipientsUI();
+        document.getElementById('recipients-panel').style.display = 'none';
+    }
+    function updateRecipientsUI() {
+        const chips = document.getElementById('recipient-chips');
+        if (!chips) return;
+        chips.innerHTML = window.__CHAT_SELECTED_RECIPIENTS__.map(n => {
+            const u = CHAT_USERS.find(x=>x.name===n) || {color:'#999'};
+            return `<span class="chip"><span class="dot" style="background:${u.color}"></span>${n}</span>`;
+        }).join('');
     }
 }
 
@@ -1435,11 +1538,12 @@ function createChatMessageHTML(message) {
     const isMention = message.Message.includes('@');
     const mentionClass = isMention ? 'mention' : '';
     const typeClass = message.Type?.toLowerCase() || 'gm';
+    const color = getUserColor(message.Sender);
     
     return `
         <div class="chat-message ${mentionClass} message-type-${typeClass}">
             <div class="chat-message-header">
-                <span class="chat-user">${message.Sender}</span>
+                <span class="chat-user" style="color:${color}">${message.Sender}</span>
                 <span class="chat-timestamp">${timestamp}</span>
                 <span class="chat-type ${typeClass}">${messageType}</span>
             </div>
@@ -1520,7 +1624,20 @@ function getMessageTypeIcon(type) {
  * Format chat message with @mentions
  */
 function formatChatMessage(message) {
-    return message.replace(/@(\w+)/g, '<span class="mention">@$1</span>');
+    // Color known @mentions
+    const users = (window.__CHAT_USERS__ || []).reduce((m,u)=>{m[u.name.toLowerCase()] = u.color; return m;},{});
+    return message.replace(/@(\w[\w\.\-]*)/g, (m, p1) => {
+        const key = p1.toLowerCase();
+        const color = users[key] || '#e74c3c';
+        return `<span class="mention" style="color:${color}">@${p1}</span>`;
+    });
+}
+
+// Return color for a user name
+function getUserColor(name) {
+    const list = window.__CHAT_USERS__ || [];
+    const u = list.find(x => x.name === name);
+    return u ? u.color : '#667eea';
 }
 
 /**
@@ -1545,11 +1662,21 @@ async function sendChatMessage() {
     const user = userSelect.value;
     const message = messageInput.value.trim();
     const type = typeSelect.value;
+    const recipients = (window.__CHAT_SELECTED_RECIPIENTS__ || []).slice();
     
     if (!message) {
         alert('Please enter a message');
         return;
     }
+    if (type === 'DM' && recipients.length !== 1) {
+        alert('Direct Message requires exactly 1 recipient');
+        return;
+    }
+    if (!recipients.length && type !== 'NOTE') {
+        alert('Please choose at least one recipient');
+        return;
+    }
+    const participants = [`<${user}>`].concat(recipients.map(r=>`<${r}>`)).join('');
     
     try {
         const response = await fetch('/api/add-chat-message', {
@@ -1558,10 +1685,11 @@ async function sendChatMessage() {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                user,
+                sender: user,
                 message,
                 type,
-                recipients: 'all'
+                participants,
+                tags: ''
             })
         });
         
@@ -1571,7 +1699,7 @@ async function sendChatMessage() {
         
         // Clear input and reload chat
         messageInput.value = '';
-        await loadChat();
+        await loadChat(user);
         
     } catch (error) {
         console.error('Error sending message:', error);

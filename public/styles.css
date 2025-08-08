@@ -2029,6 +2029,22 @@ body.dark-mode {
     align-items: center;
 }
 
+/* Recipients selector */
+.chat-recipients { position: relative; min-width: 280px; }
+.recipients-btn {
+    padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; background: #f7f7f7; cursor: pointer;
+}
+.recipients-panel {
+    position: absolute; top: 40px; left: 0; z-index: 10; background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 10px; width: 260px; box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+.recipient-row { display: flex; gap: 8px; align-items: center; padding: 6px 2px; }
+.recipient-row .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.recipients-actions { margin-top: 8px; text-align: right; }
+.recipients-actions .btn-apply { padding: 6px 10px; background: #667eea; color:#fff; border: none; border-radius: 6px; cursor: pointer; }
+.chips { display: inline-flex; gap: 6px; flex-wrap: wrap; margin-right: 6px; }
+.chip { background: #eef2ff; border: 1px solid #dbe3ff; border-radius: 999px; padding: 4px 8px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; }
+.chip .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
 .chat-user-select,
 .chat-type-select {
     padding: 8px 12px;
